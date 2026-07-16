@@ -12,6 +12,7 @@ Codex Skin Studio is a portable Windows theme-creation atelier. It converts a sm
 4. Preview before applying. Display the generated hero, generated icons, palette, copy, and native Codex layout together.
 5. Fail closed. Missing, truncated, irrelevant, or invalid assets stop the workflow; they never trigger a fallback application.
 6. Keep the change reversible. Only verified renderer DOM is restyled, and restore stays one click away.
+7. Keep creative history. Every completed theme remains available locally for preview and switching until the user deliberately deletes it; the theme currently applied to Codex is always protected.
 
 ## Visual direction
 
@@ -25,4 +26,3 @@ The product should feel like a focused theme studio, not a Windows settings util
 - Four theme icons share one visual language and remain readable at small size.
 - Sidebar, header, hero, cards, project selector, composer, and task surface read as one theme system.
 - Native top menus and unrelated controls retain official geometry without injected outlines.
-

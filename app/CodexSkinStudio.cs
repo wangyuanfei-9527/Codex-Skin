@@ -24,8 +24,8 @@ using Microsoft.Win32;
 [assembly: AssemblyDescription("Local-first Codex theme and pet studio")]
 [assembly: AssemblyCompany("Codex Skin Studio contributors")]
 [assembly: AssemblyProduct("Codex Skin Studio")]
-[assembly: AssemblyVersion("0.6.0.0")]
-[assembly: AssemblyFileVersion("0.6.0.0")]
+[assembly: AssemblyVersion("0.7.0.0")]
+[assembly: AssemblyFileVersion("0.7.0.0")]
 
 namespace CodexSkinStudio
 {
@@ -35,7 +35,7 @@ namespace CodexSkinStudio
         private static void Main()
         {
             bool created;
-            using (var mutex = new Mutex(true, "CodexSkinStudio.Portable.0.6", out created))
+            using (var mutex = new Mutex(true, "CodexSkinStudio.Portable.0.7", out created))
             {
                 if (!created)
                 {
@@ -68,7 +68,7 @@ namespace CodexSkinStudio
 
     internal static class RuntimeBootstrap
     {
-        private const string Version = "0.6.0";
+        private const string Version = "0.7.0";
 
         public static RuntimeFiles Ensure()
         {
@@ -127,6 +127,19 @@ namespace CodexSkinStudio
         public BitmapSource Thumbnail { get; set; }
     }
 
+    internal sealed class ThemeLibraryItem
+    {
+        public string Path { get; set; }
+        public string BundleId { get; set; }
+        public string Name { get; set; }
+        public string Summary { get; set; }
+        public string CreatedLabel { get; set; }
+        public string StatusLabel { get; set; }
+        public bool IsApplied { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public BitmapSource Thumbnail { get; set; }
+    }
+
     internal sealed class CliResult
     {
         public int ExitCode { get; set; }
@@ -138,6 +151,7 @@ namespace CodexSkinStudio
     {
         private readonly RuntimeFiles runtime;
         private readonly ObservableCollection<ReferenceItem> references = new ObservableCollection<ReferenceItem>();
+        private readonly ObservableCollection<ThemeLibraryItem> themeLibrary = new ObservableCollection<ThemeLibraryItem>();
         private readonly JavaScriptSerializer json = new JavaScriptSerializer();
         private Process activeProcess;
         private string currentBundle;
@@ -147,6 +161,7 @@ namespace CodexSkinStudio
         public Window Window { get; private set; }
 
         private ListBox referenceList;
+        private ListBox themeLibraryList;
         private TextBox briefBox;
         private ComboBox presetBox;
         private Image previewImage;
@@ -169,6 +184,8 @@ namespace CodexSkinStudio
         private TextBlock statusText;
         private TextBlock runtimeText;
         private TextBlock bundleText;
+        private TextBlock libraryCountText;
+        private TextBlock libraryEmptyText;
         private TextBlock stepOne;
         private TextBlock stepTwo;
         private TextBlock stepThree;
@@ -178,6 +195,13 @@ namespace CodexSkinStudio
         private Button applyButton;
         private Button restoreButton;
         private Button cancelButton;
+        private Button flowModeButton;
+        private Button libraryModeButton;
+        private Button libraryApplyButton;
+        private Button refreshLibraryButton;
+        private Button deleteLibraryButton;
+        private Grid flowPanel;
+        private Grid libraryPanel;
         private ProgressBar progress;
         private readonly List<Border> swatches = new List<Border>();
         private readonly List<Border> previewCards = new List<Border>();
@@ -193,7 +217,8 @@ namespace CodexSkinStudio
             BindControls();
             BindEvents();
             referenceList.ItemsSource = references;
-            Window.Loaded += async delegate { TryLoadLatestBundlePreview(); await CheckRuntimeAsync(); };
+            themeLibraryList.ItemsSource = themeLibrary;
+            Window.Loaded += async delegate { RefreshThemeLibrary(true); await CheckRuntimeAsync(); };
         }
 
         private Window LoadShell()
@@ -427,27 +452,72 @@ namespace CodexSkinStudio
       </Grid>
 
       <Border Grid.Column='2' Background='{StaticResource Panel}' BorderBrush='{StaticResource Border}' BorderThickness='1,0,0,0'>
-        <Grid Margin='19,20'><Grid.RowDefinitions><RowDefinition Height='Auto'/><RowDefinition Height='*'/><RowDefinition Height='Auto'/></Grid.RowDefinitions>
-          <StackPanel><TextBlock Text='OUTPUT / 皮肤流程' FontFamily='Consolas' FontSize='14' FontWeight='Bold'/><TextBlock Text='先把皮肤做到可用；宠物独立生成。' FontSize='10.5' Foreground='{StaticResource Muted}' Margin='0,6,0,20'/>
-            <Grid Margin='0,0,0,14'><Grid.ColumnDefinitions><ColumnDefinition Width='30'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions><Border Width='24' Height='24' CornerRadius='12' Background='#282C31'><TextBlock Text='1' HorizontalAlignment='Center' VerticalAlignment='Center' FontSize='11'/></Border><StackPanel Grid.Column='1'><TextBlock Text='提取参考图核心元素' FontSize='12.5' FontWeight='SemiBold'/><TextBlock x:Name='StepOne' Text='等待图片和需求' FontSize='10' Foreground='{StaticResource Muted}' Margin='0,3,0,0' TextWrapping='Wrap'/></StackPanel></Grid>
-            <Grid Margin='0,0,0,14'><Grid.ColumnDefinitions><ColumnDefinition Width='30'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions><Border Width='24' Height='24' CornerRadius='12' Background='#282C31'><TextBlock Text='2' HorizontalAlignment='Center' VerticalAlignment='Center' FontSize='11'/></Border><StackPanel Grid.Column='1'><TextBlock Text='生成主题与提示词包' FontSize='12.5' FontWeight='SemiBold'/><TextBlock x:Name='StepTwo' Text='等待核心元素提取' FontSize='10' Foreground='{StaticResource Muted}' Margin='0,3,0,0' TextWrapping='Wrap'/></StackPanel></Grid>
-            <Grid Margin='0,0,0,14'><Grid.ColumnDefinitions><ColumnDefinition Width='30'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions><Border Width='24' Height='24' CornerRadius='12' Background='#282C31'><TextBlock Text='3' HorizontalAlignment='Center' VerticalAlignment='Center' FontSize='11'/></Border><StackPanel Grid.Column='1'><TextBlock Text='生成并校验视觉资产' FontSize='12.5' FontWeight='SemiBold'/><TextBlock x:Name='StepThree' Text='主视觉与四枚主题图标' FontSize='10' Foreground='{StaticResource Muted}' Margin='0,3,0,0' TextWrapping='Wrap'/></StackPanel></Grid>
-            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width='30'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions><Border Width='24' Height='24' CornerRadius='12' Background='#282C31'><TextBlock Text='4' HorizontalAlignment='Center' VerticalAlignment='Center' FontSize='11'/></Border><StackPanel Grid.Column='1'><TextBlock Text='编译、预览与应用' FontSize='12.5' FontWeight='SemiBold'/><TextBlock x:Name='StepFour' Text='预览通过后才注入 Codex' FontSize='10' Foreground='{StaticResource Muted}' Margin='0,3,0,0' TextWrapping='Wrap'/></StackPanel></Grid>
-          </StackPanel>
+        <Grid Margin='16,16'><Grid.RowDefinitions><RowDefinition Height='Auto'/><RowDefinition Height='*'/></Grid.RowDefinitions>
+          <UniformGrid Columns='2'>
+            <Button x:Name='FlowModeButton' Content='创作流程' Style='{StaticResource StudioButton}' Padding='8,7' Margin='0,0,4,0' Background='#282C31' BorderBrush='{StaticResource Accent}'/>
+            <Button x:Name='LibraryModeButton' Content='主题库' Style='{StaticResource StudioButton}' Padding='8,7' Margin='4,0,0,0'/>
+          </UniformGrid>
 
-          <StackPanel Grid.Row='1' VerticalAlignment='Bottom' Margin='0,22,0,18'>
-            <ProgressBar x:Name='Progress' Height='3' IsIndeterminate='True' Visibility='Collapsed' Foreground='{StaticResource Accent}' Background='#332D3B' Margin='0,0,0,14'/>
-            <Button x:Name='GenerateButton' Content='生成皮肤并应用' Style='{StaticResource PrimaryButton}' Margin='0,0,0,9'/>
-            <Button x:Name='PreviewButton' Content='只生成皮肤预览' Style='{StaticResource StudioButton}' Margin='0,0,0,9'/>
-            <Button x:Name='ApplyButton' Content='应用当前预览' Style='{StaticResource StudioButton}' IsEnabled='False' Margin='0,0,0,9'/>
-            <Button x:Name='CancelButton' Content='取消当前任务' Style='{StaticResource StudioButton}' Visibility='Collapsed'/>
-          </StackPanel>
+          <Grid Grid.Row='1'>
+            <Grid x:Name='FlowPanel' Margin='3,18,3,4'><Grid.RowDefinitions><RowDefinition Height='Auto'/><RowDefinition Height='*'/><RowDefinition Height='Auto'/></Grid.RowDefinitions>
+              <StackPanel><TextBlock Text='OUTPUT / 皮肤流程' FontFamily='Consolas' FontSize='14' FontWeight='Bold'/><TextBlock Text='每次生成都会自动进入主题库。' FontSize='10.5' Foreground='{StaticResource Muted}' Margin='0,6,0,20'/>
+                <Grid Margin='0,0,0,14'><Grid.ColumnDefinitions><ColumnDefinition Width='30'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions><Border Width='24' Height='24' CornerRadius='12' Background='#282C31'><TextBlock Text='1' HorizontalAlignment='Center' VerticalAlignment='Center' FontSize='11'/></Border><StackPanel Grid.Column='1'><TextBlock Text='提取参考图核心元素' FontSize='12.5' FontWeight='SemiBold'/><TextBlock x:Name='StepOne' Text='等待图片和需求' FontSize='10' Foreground='{StaticResource Muted}' Margin='0,3,0,0' TextWrapping='Wrap'/></StackPanel></Grid>
+                <Grid Margin='0,0,0,14'><Grid.ColumnDefinitions><ColumnDefinition Width='30'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions><Border Width='24' Height='24' CornerRadius='12' Background='#282C31'><TextBlock Text='2' HorizontalAlignment='Center' VerticalAlignment='Center' FontSize='11'/></Border><StackPanel Grid.Column='1'><TextBlock Text='生成主题与提示词包' FontSize='12.5' FontWeight='SemiBold'/><TextBlock x:Name='StepTwo' Text='等待核心元素提取' FontSize='10' Foreground='{StaticResource Muted}' Margin='0,3,0,0' TextWrapping='Wrap'/></StackPanel></Grid>
+                <Grid Margin='0,0,0,14'><Grid.ColumnDefinitions><ColumnDefinition Width='30'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions><Border Width='24' Height='24' CornerRadius='12' Background='#282C31'><TextBlock Text='3' HorizontalAlignment='Center' VerticalAlignment='Center' FontSize='11'/></Border><StackPanel Grid.Column='1'><TextBlock Text='生成并校验视觉资产' FontSize='12.5' FontWeight='SemiBold'/><TextBlock x:Name='StepThree' Text='主视觉与四枚主题图标' FontSize='10' Foreground='{StaticResource Muted}' Margin='0,3,0,0' TextWrapping='Wrap'/></StackPanel></Grid>
+                <Grid><Grid.ColumnDefinitions><ColumnDefinition Width='30'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions><Border Width='24' Height='24' CornerRadius='12' Background='#282C31'><TextBlock Text='4' HorizontalAlignment='Center' VerticalAlignment='Center' FontSize='11'/></Border><StackPanel Grid.Column='1'><TextBlock Text='编译、预览与应用' FontSize='12.5' FontWeight='SemiBold'/><TextBlock x:Name='StepFour' Text='预览通过后才注入 Codex' FontSize='10' Foreground='{StaticResource Muted}' Margin='0,3,0,0' TextWrapping='Wrap'/></StackPanel></Grid>
+              </StackPanel>
 
-          <StackPanel Grid.Row='2'>
-            <Border Height='1' Background='{StaticResource Border}' Margin='0,0,0,15'/>
-            <Button x:Name='RestoreButton' Content='恢复原版 Codex' Style='{StaticResource StudioButton}'/>
-            <TextBlock Text='恢复只移除由本应用管理且未被修改的文件。' FontSize='9.5' Foreground='{StaticResource Muted}' TextWrapping='Wrap' Margin='2,9,2,0'/>
-          </StackPanel>
+              <StackPanel Grid.Row='1' VerticalAlignment='Bottom' Margin='0,22,0,18'>
+                <ProgressBar x:Name='Progress' Height='3' IsIndeterminate='True' Visibility='Collapsed' Foreground='{StaticResource Accent}' Background='#332D3B' Margin='0,0,0,14'/>
+                <Button x:Name='GenerateButton' Content='生成皮肤并应用' Style='{StaticResource PrimaryButton}' Margin='0,0,0,9'/>
+                <Button x:Name='PreviewButton' Content='只生成皮肤预览' Style='{StaticResource StudioButton}' Margin='0,0,0,9'/>
+                <Button x:Name='ApplyButton' Content='应用当前预览' Style='{StaticResource StudioButton}' IsEnabled='False' Margin='0,0,0,9'/>
+                <Button x:Name='CancelButton' Content='取消当前任务' Style='{StaticResource StudioButton}' Visibility='Collapsed'/>
+              </StackPanel>
+
+              <StackPanel Grid.Row='2'>
+                <Border Height='1' Background='{StaticResource Border}' Margin='0,0,0,15'/>
+                <Button x:Name='RestoreButton' Content='恢复原版 Codex' Style='{StaticResource StudioButton}'/>
+                <TextBlock Text='恢复只移除当前应用的皮肤，不删除主题库。' FontSize='9.5' Foreground='{StaticResource Muted}' TextWrapping='Wrap' Margin='2,9,2,0'/>
+              </StackPanel>
+            </Grid>
+
+            <Grid x:Name='LibraryPanel' Margin='3,18,3,4' Visibility='Collapsed'><Grid.RowDefinitions><RowDefinition Height='Auto'/><RowDefinition Height='*'/><RowDefinition Height='Auto'/></Grid.RowDefinitions>
+              <StackPanel Margin='0,0,0,12'>
+                <TextBlock Text='LIBRARY / 主题库' FontFamily='Consolas' FontSize='14' FontWeight='Bold'/>
+                <TextBlock x:Name='LibraryCountText' Text='正在读取历史主题' FontSize='10.5' Foreground='{StaticResource Muted}' Margin='0,6,0,0'/>
+              </StackPanel>
+              <Grid Grid.Row='1'>
+                <ListBox x:Name='ThemeLibraryList' Background='Transparent' BorderThickness='0' ScrollViewer.HorizontalScrollBarVisibility='Disabled'>
+                  <ListBox.ItemContainerStyle><Style TargetType='ListBoxItem'>
+                    <Setter Property='Foreground' Value='{StaticResource Text}'/><Setter Property='HorizontalContentAlignment' Value='Stretch'/><Setter Property='Padding' Value='0'/><Setter Property='Margin' Value='0,0,0,5'/>
+                    <Setter Property='Template'><Setter.Value><ControlTemplate TargetType='ListBoxItem'>
+                      <Border x:Name='Row' Background='Transparent' CornerRadius='9' Padding='7'><ContentPresenter/></Border>
+                      <ControlTemplate.Triggers>
+                        <Trigger Property='IsMouseOver' Value='True'><Setter TargetName='Row' Property='Background' Value='#202328'/></Trigger>
+                        <Trigger Property='IsSelected' Value='True'><Setter TargetName='Row' Property='Background' Value='#302934'/></Trigger>
+                      </ControlTemplate.Triggers>
+                    </ControlTemplate></Setter.Value></Setter>
+                  </Style></ListBox.ItemContainerStyle>
+                  <ListBox.ItemTemplate><DataTemplate>
+                    <Grid ToolTip='{Binding Summary}'><Grid.ColumnDefinitions><ColumnDefinition Width='58'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions>
+                      <Border Width='52' Height='40' CornerRadius='6' ClipToBounds='True' Background='#22252A'><Image Source='{Binding Thumbnail}' Stretch='UniformToFill'/></Border>
+                      <StackPanel Grid.Column='1' Margin='9,1,0,0'><TextBlock Text='{Binding Name}' FontSize='11.5' FontWeight='SemiBold' Foreground='{StaticResource Text}' TextTrimming='CharacterEllipsis'/><StackPanel Orientation='Horizontal' Margin='0,5,0,0'><TextBlock Text='{Binding CreatedLabel}' FontSize='9.5' Foreground='{StaticResource Muted}'/><TextBlock Text='{Binding StatusLabel}' FontSize='9.5' FontWeight='Bold' Foreground='{StaticResource Teal}' Margin='7,0,0,0'/></StackPanel></StackPanel>
+                    </Grid>
+                  </DataTemplate></ListBox.ItemTemplate>
+                </ListBox>
+                <TextBlock x:Name='LibraryEmptyText' Text='还没有历史主题。&#x0a;生成第一套皮肤后会自动出现在这里。' FontSize='10.5' Foreground='{StaticResource Muted}' TextAlignment='Center' TextWrapping='Wrap' HorizontalAlignment='Center' VerticalAlignment='Center' Visibility='Collapsed'/>
+              </Grid>
+              <StackPanel Grid.Row='2' Margin='0,14,0,0'>
+                <Button x:Name='LibraryApplyButton' Content='应用选中主题' Style='{StaticResource PrimaryButton}' IsEnabled='False' Margin='0,0,0,9'/>
+                <Grid><Grid.ColumnDefinitions><ColumnDefinition Width='*'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions>
+                  <Button x:Name='RefreshLibraryButton' Content='刷新主题库' Style='{StaticResource StudioButton}' Margin='0,0,4,0'/>
+                  <Button x:Name='DeleteLibraryButton' Grid.Column='1' Content='删除主题' ToolTip='删除当前选中的历史主题' Style='{StaticResource StudioButton}' Foreground='#F6A2A2' BorderBrush='#714047' Margin='4,0,0,0' IsEnabled='False'/>
+                </Grid>
+                <TextBlock Text='历史主题保存在本机，不会因切换或恢复原版而删除。' FontSize='9.5' Foreground='{StaticResource Muted}' TextWrapping='Wrap' Margin='2,10,2,0'/>
+              </StackPanel>
+            </Grid>
+          </Grid>
         </Grid>
       </Border>
     </Grid>
@@ -471,6 +541,7 @@ namespace CodexSkinStudio
         private void BindControls()
         {
             referenceList = Find<ListBox>("ReferenceList");
+            themeLibraryList = Find<ListBox>("ThemeLibraryList");
             briefBox = Find<TextBox>("BriefBox");
             presetBox = Find<ComboBox>("PresetBox");
             previewImage = Find<Image>("PreviewImage");
@@ -493,6 +564,8 @@ namespace CodexSkinStudio
             statusText = Find<TextBlock>("StatusText");
             runtimeText = Find<TextBlock>("RuntimeText");
             bundleText = Find<TextBlock>("BundleText");
+            libraryCountText = Find<TextBlock>("LibraryCountText");
+            libraryEmptyText = Find<TextBlock>("LibraryEmptyText");
             stepOne = Find<TextBlock>("StepOne");
             stepTwo = Find<TextBlock>("StepTwo");
             stepThree = Find<TextBlock>("StepThree");
@@ -502,6 +575,13 @@ namespace CodexSkinStudio
             applyButton = Find<Button>("ApplyButton");
             restoreButton = Find<Button>("RestoreButton");
             cancelButton = Find<Button>("CancelButton");
+            flowModeButton = Find<Button>("FlowModeButton");
+            libraryModeButton = Find<Button>("LibraryModeButton");
+            libraryApplyButton = Find<Button>("LibraryApplyButton");
+            refreshLibraryButton = Find<Button>("RefreshLibraryButton");
+            deleteLibraryButton = Find<Button>("DeleteLibraryButton");
+            flowPanel = Find<Grid>("FlowPanel");
+            libraryPanel = Find<Grid>("LibraryPanel");
             progress = Find<ProgressBar>("Progress");
             for (int index = 1; index <= 6; index++) swatches.Add(Find<Border>("Swatch" + index));
             for (int index = 1; index <= 4; index++) previewCards.Add(Find<Border>("MockCard" + index));
@@ -520,6 +600,11 @@ namespace CodexSkinStudio
             applyButton.Click += async delegate { await ApplyAsync(); };
             restoreButton.Click += async delegate { await RestoreAsync(); };
             cancelButton.Click += delegate { CancelActiveProcess(); };
+            flowModeButton.Click += delegate { ShowLibrary(false); };
+            libraryModeButton.Click += delegate { ShowLibrary(true); };
+            libraryApplyButton.Click += async delegate { await ApplyAsync(); };
+            refreshLibraryButton.Click += delegate { RefreshThemeLibrary(false); };
+            deleteLibraryButton.Click += delegate { DeleteSelectedTheme(); };
             presetBox.SelectionChanged += delegate
             {
                 ComboBoxItem selected = presetBox.SelectedItem as ComboBoxItem;
@@ -529,6 +614,12 @@ namespace CodexSkinStudio
             {
                 ReferenceItem selected = referenceList.SelectedItem as ReferenceItem;
                 if (selected != null) previewImage.Source = LoadBitmap(selected.Path);
+            };
+            themeLibraryList.SelectionChanged += delegate
+            {
+                ThemeLibraryItem selected = themeLibraryList.SelectedItem as ThemeLibraryItem;
+                if (selected != null) SelectLibraryTheme(selected);
+                else deleteLibraryButton.IsEnabled = false;
             };
             Window.DragOver += OnDragOver;
             Window.Drop += OnDrop;
@@ -584,6 +675,18 @@ namespace CodexSkinStudio
             var bitmap = new BitmapImage();
             bitmap.BeginInit();
             bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.UriSource = new Uri(path, UriKind.Absolute);
+            bitmap.EndInit();
+            bitmap.Freeze();
+            return bitmap;
+        }
+
+        private static BitmapImage LoadThumbnail(string path)
+        {
+            var bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.DecodePixelWidth = 180;
             bitmap.UriSource = new Uri(path, UriKind.Absolute);
             bitmap.EndInit();
             bitmap.Freeze();
@@ -696,6 +799,7 @@ namespace CodexSkinStudio
                 if (response == null || !response.ContainsKey("bundle")) throw new InvalidOperationException("生成完成，但没有返回可用的主题包。请查看本地 Codex 状态后重试。");
                 currentBundle = Convert.ToString(response["bundle"]);
                 LoadBundlePreview(currentBundle);
+                RefreshThemeLibrary(false);
                 stepOne.Text = "核心元素已提取并保存";
                 stepTwo.Text = "主题规范与资产提示词包已保存";
                 stepThree.Text = "主视觉和四枚主题图标已通过校验";
@@ -728,40 +832,53 @@ namespace CodexSkinStudio
         private void LoadBundlePreview(string bundle)
         {
             Dictionary<string, object> manifest = ReadJson(Path.Combine(bundle, "manifest.json"));
-            Dictionary<string, object> design = ReadJson(Path.Combine(bundle, Convert.ToString(manifest["design"])));
-            previewTitle.Text = Convert.ToString(design["name"]);
-            previewSubtitle.Text = Convert.ToString(design["summary"]);
-            mockHeroTitle.Text = Convert.ToString(design["name"]);
-            mockHeroSummary.Text = Convert.ToString(design["summary"]);
-            Dictionary<string, object> copy = design["copy"] as Dictionary<string, object>;
+            Dictionary<string, object> design = ReadJson(ResolveBundleFile(bundle, StringValue(manifest, "design", null)));
+            string name = StringValue(design, "name", StringValue(manifest, "name", "未命名主题"));
+            string summary = StringValue(design, "summary", StringValue(manifest, "summary", "本地保存的主题作品"));
+            previewTitle.Text = name;
+            previewSubtitle.Text = summary;
+            mockHeroTitle.Text = name;
+            mockHeroSummary.Text = summary;
+            mockComposerPlaceholder.Text = "和 Codex 一起构建什么？";
+            mockSignature.Text = "STUDIO ✦";
+            string[] defaultTitles = { "探索并理解代码", "构建新功能", "审查与验证", "修复问题" };
+            string[] defaultSubtitles = { "快速读懂结构与逻辑", "把灵感稳稳变成实现", "检查质量与边界", "定位根因并修复" };
+            for (int index = 0; index < previewCardTitles.Count; index++)
+            {
+                previewCardTitles[index].Text = defaultTitles[index];
+                previewCardSubtitles[index].Text = defaultSubtitles[index];
+                previewIconImages[index].Source = null;
+            }
+            petFrame.Visibility = Visibility.Collapsed;
+            Dictionary<string, object> copy = DictionaryValue(design, "copy");
             if (copy != null)
             {
-                mockHeroTitle.Text = Convert.ToString(copy["heroTitle"]);
-                mockHeroSummary.Text = Convert.ToString(copy["heroSubtitle"]);
-                mockComposerPlaceholder.Text = Convert.ToString(copy["composerPlaceholder"]);
-                mockSignature.Text = Convert.ToString(copy["signature"]);
-                object[] titles = copy.ContainsKey("cardTitles") ? copy["cardTitles"] as object[] : null;
+                mockHeroTitle.Text = StringValue(copy, "heroTitle", name);
+                mockHeroSummary.Text = StringValue(copy, "heroSubtitle", summary);
+                mockComposerPlaceholder.Text = StringValue(copy, "composerPlaceholder", mockComposerPlaceholder.Text);
+                mockSignature.Text = StringValue(copy, "signature", mockSignature.Text);
+                object[] titles = ArrayValue(copy, "cardTitles");
                 if (titles != null)
                 {
                     for (int index = 0; index < previewCardTitles.Count && index < titles.Length; index++)
                         previewCardTitles[index].Text = Convert.ToString(titles[index]);
                 }
-                object[] subtitles = copy["cardSubtitles"] as object[];
+                object[] subtitles = ArrayValue(copy, "cardSubtitles");
                 if (subtitles != null)
                 {
                     for (int index = 0; index < previewCardSubtitles.Count && index < subtitles.Length; index++)
                         previewCardSubtitles[index].Text = Convert.ToString(subtitles[index]);
                 }
             }
-            Dictionary<string, object> theme = manifest["theme"] as Dictionary<string, object>;
+            Dictionary<string, object> theme = DictionaryValue(manifest, "theme");
             if (theme != null && theme.ContainsKey("background"))
-                previewImage.Source = LoadBitmap(Path.Combine(bundle, Convert.ToString(theme["background"])));
+                previewImage.Source = LoadBitmap(ResolveBundleFile(bundle, StringValue(theme, "background", null)));
             if (theme != null && theme.ContainsKey("icons"))
             {
-                Dictionary<string, object> icons = theme["icons"] as Dictionary<string, object>;
+                Dictionary<string, object> icons = DictionaryValue(theme, "icons");
                 if (icons != null && icons.ContainsKey("path"))
                 {
-                    BitmapImage atlas = LoadBitmap(Path.Combine(bundle, Convert.ToString(icons["path"])));
+                    BitmapImage atlas = LoadBitmap(ResolveBundleFile(bundle, StringValue(icons, "path", null)));
                     int cellWidth = atlas.PixelWidth / 2;
                     int cellHeight = atlas.PixelHeight / 2;
                     for (int index = 0; index < previewIconImages.Count; index++)
@@ -774,41 +891,48 @@ namespace CodexSkinStudio
                     }
                 }
             }
-            Dictionary<string, object> palette = design["palette"] as Dictionary<string, object>;
+            Dictionary<string, object> palette = DictionaryValue(design, "palette");
             if (palette != null)
             {
                 string[] keys = { "background", "surface", "text", "accent", "accentAlt", "border" };
-                for (int index = 0; index < swatches.Count; index++) swatches[index].Background = BrushFrom(Convert.ToString(palette[keys[index]]));
-                Brush background = BrushFrom(Convert.ToString(palette["background"]));
-                Brush surface = BrushFrom(Convert.ToString(palette["surface"]));
-                Brush surfaceAlt = BrushFrom(Convert.ToString(palette["surfaceAlt"]));
-                Brush text = BrushFrom(Convert.ToString(palette["text"]));
-                Brush accent = BrushFrom(Convert.ToString(palette["accent"]));
-                Brush accentAlt = BrushFrom(Convert.ToString(palette["accentAlt"]));
-                Brush border = BrushFrom(Convert.ToString(palette["border"]));
+                string backgroundColor = StringValue(palette, "background", "#101214");
+                string surfaceColor = StringValue(palette, "surface", "#1D2024");
+                string surfaceAltColor = StringValue(palette, "surfaceAlt", surfaceColor);
+                string textColor = StringValue(palette, "text", "#F5F4F1");
+                string accentColor = StringValue(palette, "accent", "#F6A04D");
+                string accentAltColor = StringValue(palette, "accentAlt", accentColor);
+                string borderColor = StringValue(palette, "border", "#34383E");
+                string[] colors = { backgroundColor, surfaceColor, textColor, accentColor, accentAltColor, borderColor };
+                for (int index = 0; index < swatches.Count; index++) swatches[index].Background = BrushFrom(colors[index]);
+                Brush background = BrushFrom(backgroundColor);
+                Brush surface = BrushFrom(surfaceColor);
+                Brush text = BrushFrom(textColor);
+                Brush accent = BrushFrom(accentColor);
+                Brush accentAlt = BrushFrom(accentAltColor);
+                Brush border = BrushFrom(borderColor);
                 previewPage.Background = background;
                 previewPage.Resources["PreviewTextBrush"] = text;
-                previewTint.Background = BrushWithOpacity(Convert.ToString(palette["background"]), 0.10);
-                mockSidebar.Background = BrushWithOpacity(Convert.ToString(palette["surfaceAlt"]), 0.97);
+                previewTint.Background = BrushWithOpacity(backgroundColor, 0.10);
+                mockSidebar.Background = BrushWithOpacity(surfaceAltColor, 0.97);
                 mockSidebar.BorderBrush = border;
                 mockSurface.Background = surface;
                 previewHero.BorderBrush = border;
-                mockHeroPanel.Background = BrushWithOpacity(Convert.ToString(palette["background"]), 0.82);
-                mockComposer.Background = BrushWithOpacity(Convert.ToString(palette["surface"]), 0.97);
+                mockHeroPanel.Background = BrushWithOpacity(backgroundColor, 0.82);
+                mockComposer.Background = BrushWithOpacity(surfaceColor, 0.97);
                 mockComposer.BorderBrush = border;
-                petFrame.Background = BrushWithOpacity(Convert.ToString(palette["surface"]), 0.94);
+                petFrame.Background = BrushWithOpacity(surfaceColor, 0.94);
                 petFrame.BorderBrush = accent;
                 foreach (Border card in previewCards)
                 {
-                    card.Background = BrushWithOpacity(Convert.ToString(palette["surface"]), 0.96);
+                    card.Background = BrushWithOpacity(surfaceColor, 0.96);
                     card.BorderBrush = border;
                 }
                 for (int index = 0; index < previewAccents.Count; index++) previewAccents[index].Background = index % 2 == 0 ? accent : accentAlt;
             }
-            Dictionary<string, object> pet = manifest["pet"] as Dictionary<string, object>;
-            if (pet != null)
+            Dictionary<string, object> pet = DictionaryValue(manifest, "pet");
+            if (pet != null && pet.ContainsKey("spritesheet"))
             {
-                string sprite = Path.Combine(bundle, Convert.ToString(pet["spritesheet"]));
+                string sprite = ResolveBundleFile(bundle, StringValue(pet, "spritesheet", null));
                 BitmapImage atlas = LoadBitmap(sprite);
                 var frame = new CroppedBitmap(atlas, new Int32Rect(0, 0, 192, 208));
                 frame.Freeze();
@@ -818,36 +942,210 @@ namespace CodexSkinStudio
             canvasHint.Visibility = Visibility.Collapsed;
         }
 
-        private void TryLoadLatestBundlePreview()
+        private void ShowLibrary(bool show)
+        {
+            flowPanel.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
+            libraryPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+            flowModeButton.Background = BrushFrom(show ? "#1D2024" : "#282C31");
+            libraryModeButton.Background = BrushFrom(show ? "#282C31" : "#1D2024");
+            flowModeButton.BorderBrush = BrushFrom(show ? "#30343A" : "#F6A04D");
+            libraryModeButton.BorderBrush = BrushFrom(show ? "#F6A04D" : "#30343A");
+            if (show && !busy) RefreshThemeLibrary(false);
+        }
+
+        private void RefreshThemeLibrary(bool selectLatest)
+        {
+            string selectedPath = currentBundle;
+            string activeBundleId = ReadActiveBundleId();
+            var discovered = new List<ThemeLibraryItem>();
+            string root = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "CodexSkinStudio", "desktop-bundles");
+            Directory.CreateDirectory(root);
+            foreach (DirectoryInfo directory in new DirectoryInfo(root).GetDirectories())
+            {
+                try
+                {
+                    string manifestPath = Path.Combine(directory.FullName, "manifest.json");
+                    if (!File.Exists(manifestPath)) continue;
+                    Dictionary<string, object> manifest = ReadJson(manifestPath);
+                    if (manifest == null) continue;
+                    string kind = StringValue(manifest, "kind", null);
+                    if (!String.IsNullOrWhiteSpace(kind) && !String.Equals(kind, "skin", StringComparison.OrdinalIgnoreCase)) continue;
+                    Dictionary<string, object> theme = DictionaryValue(manifest, "theme");
+                    string background = ResolveBundleFile(directory.FullName, StringValue(theme, "background", null));
+                    string design = ResolveBundleFile(directory.FullName, StringValue(manifest, "design", null));
+                    if (!File.Exists(background) || !File.Exists(design)) continue;
+                    string bundleId = StringValue(manifest, "id", directory.Name);
+                    bool isApplied = !String.IsNullOrWhiteSpace(activeBundleId) && String.Equals(bundleId, activeBundleId, StringComparison.OrdinalIgnoreCase);
+                    DateTime created = directory.LastWriteTimeUtc;
+                    DateTime parsed;
+                    if (manifest.ContainsKey("createdAt") && DateTime.TryParse(Convert.ToString(manifest["createdAt"]), null, System.Globalization.DateTimeStyles.RoundtripKind, out parsed)) created = parsed.ToUniversalTime();
+                    discovered.Add(new ThemeLibraryItem
+                    {
+                        Path = directory.FullName,
+                        BundleId = bundleId,
+                        Name = StringValue(manifest, "name", directory.Name),
+                        Summary = StringValue(manifest, "summary", "本地主题"),
+                        CreatedAt = created,
+                        CreatedLabel = created.ToLocalTime().ToString("yyyy-MM-dd  HH:mm"),
+                        StatusLabel = isApplied ? "使用中" : String.Empty,
+                        IsApplied = isApplied,
+                        Thumbnail = LoadThumbnail(background),
+                    });
+                }
+                catch (Exception)
+                {
+                    // A damaged historical folder must not prevent the rest of the local library from loading.
+                    continue;
+                }
+            }
+
+            themeLibraryList.SelectedItem = null;
+            themeLibrary.Clear();
+            foreach (ThemeLibraryItem item in discovered.OrderByDescending(item => item.CreatedAt)) themeLibrary.Add(item);
+            libraryCountText.Text = themeLibrary.Count == 0 ? "暂无历史主题" : "已保留 " + themeLibrary.Count + " 套本地主题";
+            libraryEmptyText.Visibility = themeLibrary.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            ThemeLibraryItem selected = themeLibrary.FirstOrDefault(item => String.Equals(item.Path, selectedPath, StringComparison.OrdinalIgnoreCase));
+            if (selected == null && selectLatest && themeLibrary.Count > 0) selected = themeLibrary[0];
+            if (selected != null)
+            {
+                themeLibraryList.SelectedItem = selected;
+                themeLibraryList.ScrollIntoView(selected);
+            }
+            libraryApplyButton.IsEnabled = !busy && selected != null;
+            deleteLibraryButton.IsEnabled = !busy && selected != null && !selected.IsApplied;
+        }
+
+        private void SelectLibraryTheme(ThemeLibraryItem selected)
         {
             try
             {
-                string root = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "CodexSkinStudio", "desktop-bundles");
-                if (!Directory.Exists(root)) return;
-                DirectoryInfo latest = new DirectoryInfo(root).GetDirectories()
-                    .Where(directory => File.Exists(Path.Combine(directory.FullName, "manifest.json")))
-                    .OrderByDescending(directory => directory.LastWriteTimeUtc)
-                    .FirstOrDefault();
-                if (latest == null) return;
-                Dictionary<string, object> manifest = ReadJson(Path.Combine(latest.FullName, "manifest.json"));
-                if (manifest == null || !manifest.ContainsKey("kind") || Convert.ToString(manifest["kind"]) != "skin") return;
-                currentBundle = latest.FullName;
+                currentBundle = selected.Path;
                 LoadBundlePreview(currentBundle);
-                bundleText.Text = "最近预览";
-                applyButton.IsEnabled = true;
-                stepFour.Text = "已恢复最近一次本地预览";
+                bundleText.Text = "主题库预览";
+                applyButton.IsEnabled = !busy;
+                libraryApplyButton.IsEnabled = !busy;
+                deleteLibraryButton.IsEnabled = !busy && !selected.IsApplied;
+                stepFour.Text = "已从主题库载入，可随时切换应用";
+                SetStatus("正在预览：" + selected.Name);
             }
-            catch
+            catch (Exception error)
             {
                 currentBundle = null;
+                applyButton.IsEnabled = false;
+                libraryApplyButton.IsEnabled = false;
+                deleteLibraryButton.IsEnabled = false;
+                SetStatus("主题预览失败：" + error.Message);
             }
+        }
+
+        private void DeleteSelectedTheme()
+        {
+            ThemeLibraryItem selected = themeLibraryList.SelectedItem as ThemeLibraryItem;
+            if (selected == null || busy) return;
+            string activeBundleId = ReadActiveBundleId();
+            if (selected.IsApplied || (!String.IsNullOrWhiteSpace(activeBundleId) && String.Equals(selected.BundleId, activeBundleId, StringComparison.OrdinalIgnoreCase)))
+            {
+                deleteLibraryButton.IsEnabled = false;
+                SetStatus("当前使用中的主题不能删除");
+                MessageBox.Show(Window, "当前主题正在 Codex 中使用。请先应用其他主题或恢复原版，再删除它。", "无法删除", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            MessageBoxResult answer = MessageBox.Show(
+                Window,
+                "确定永久删除“" + selected.Name + "”吗？\n\n只会删除主题库中的本地生成包；当前已经应用到 Codex 的皮肤不会被自动恢复。",
+                "删除主题",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning,
+                MessageBoxResult.No);
+            if (answer != MessageBoxResult.Yes) return;
+
+            try
+            {
+                string root = Path.GetFullPath(Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "CodexSkinStudio", "desktop-bundles")).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+                string target = Path.GetFullPath(selected.Path).TrimEnd(Path.DirectorySeparatorChar);
+                if (!target.StartsWith(root, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("拒绝删除主题库之外的目录");
+                int selectedIndex = themeLibraryList.SelectedIndex;
+                Directory.Delete(target, true);
+                currentBundle = null;
+                RefreshThemeLibrary(false);
+                if (themeLibrary.Count > 0)
+                {
+                    themeLibraryList.SelectedIndex = Math.Min(selectedIndex, themeLibrary.Count - 1);
+                    themeLibraryList.ScrollIntoView(themeLibraryList.SelectedItem);
+                }
+                else
+                {
+                    previewImage.Source = null;
+                    petImage.Source = null;
+                    foreach (Image icon in previewIconImages) icon.Source = null;
+                    petFrame.Visibility = Visibility.Collapsed;
+                    canvasHint.Visibility = Visibility.Visible;
+                    previewTitle.Text = "主题库为空";
+                    previewSubtitle.Text = "下一次生成的主题会自动保存在这里。";
+                    bundleText.Text = "等待生成";
+                    applyButton.IsEnabled = false;
+                }
+                SetStatus("已删除主题：" + selected.Name);
+            }
+            catch (Exception error)
+            {
+                SetStatus("删除失败：" + error.Message);
+                MessageBox.Show(Window, error.Message, "删除失败", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private static string ResolveBundleFile(string bundle, string relative)
+        {
+            if (String.IsNullOrWhiteSpace(relative)) throw new ArgumentException("主题文件路径为空");
+            string root = Path.GetFullPath(bundle).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            string candidate = Path.GetFullPath(Path.Combine(bundle, relative));
+            if (!candidate.StartsWith(root, StringComparison.OrdinalIgnoreCase)) throw new ArgumentException("主题文件超出本地目录");
+            return candidate;
         }
 
         private Dictionary<string, object> ReadJson(string path)
         {
             return json.DeserializeObject(File.ReadAllText(path, Encoding.UTF8)) as Dictionary<string, object>;
+        }
+
+        private string ReadActiveBundleId()
+        {
+            try
+            {
+                string activeManifest = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "CodexSkinStudio", "active", "manifest.json");
+                if (!File.Exists(activeManifest)) return null;
+                return StringValue(ReadJson(activeManifest), "id", null);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        private static Dictionary<string, object> DictionaryValue(Dictionary<string, object> source, string key)
+        {
+            object value;
+            return source != null && source.TryGetValue(key, out value) ? value as Dictionary<string, object> : null;
+        }
+
+        private static object[] ArrayValue(Dictionary<string, object> source, string key)
+        {
+            object value;
+            return source != null && source.TryGetValue(key, out value) ? value as object[] : null;
+        }
+
+        private static string StringValue(Dictionary<string, object> source, string key, string fallback)
+        {
+            object value;
+            if (source == null || !source.TryGetValue(key, out value) || value == null) return fallback;
+            string text = Convert.ToString(value);
+            return String.IsNullOrWhiteSpace(text) ? fallback : text;
         }
 
         private static Brush BrushFrom(string color)
@@ -914,6 +1212,7 @@ namespace CodexSkinStudio
             {
                 CliResult result = await RunCliAsync(new[] { "apply-skin", currentBundle, "--restart" });
                 if (result.ExitCode != 0) throw new InvalidOperationException(UsefulError(result));
+                RefreshThemeLibrary(false);
                 stepFour.Text = "Codex 重启与注入已安排";
                 bundleText.Text = "已应用";
                 SetStatus("应用完成，Codex 将自动重新打开");
@@ -939,6 +1238,7 @@ namespace CodexSkinStudio
             {
                 CliResult result = await RunCliAsync(new[] { "restore-skin", "--restart" });
                 if (result.ExitCode != 0) throw new InvalidOperationException(UsefulError(result));
+                RefreshThemeLibrary(false);
                 bundleText.Text = "已恢复";
                 stepFour.Text = "原版 Codex 重启已安排";
                 SetStatus("恢复完成，Codex 将自动重新打开");
@@ -960,6 +1260,13 @@ namespace CodexSkinStudio
             generateButton.IsEnabled = !value;
             previewButton.IsEnabled = !value;
             applyButton.IsEnabled = !value && !String.IsNullOrWhiteSpace(currentBundle);
+            libraryApplyButton.IsEnabled = !value && !String.IsNullOrWhiteSpace(currentBundle);
+            ThemeLibraryItem selectedTheme = themeLibraryList.SelectedItem as ThemeLibraryItem;
+            deleteLibraryButton.IsEnabled = !value && selectedTheme != null && !selectedTheme.IsApplied;
+            refreshLibraryButton.IsEnabled = !value;
+            themeLibraryList.IsEnabled = !value;
+            flowModeButton.IsEnabled = !value;
+            libraryModeButton.IsEnabled = !value;
             restoreButton.IsEnabled = !value;
             progress.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
             cancelButton.Visibility = value ? Visibility.Visible : Visibility.Collapsed;

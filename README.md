@@ -22,7 +22,7 @@ Build the single-file Windows application:
 .\scripts\build-windows-app.ps1
 ```
 
-Double-click `dist\CodexSkinStudio.exe`, add local images, adjust the brief, and generate a preview. The right panel exposes reference extraction, prompt planning, hero/icon generation, compilation, and application as separate progress stages.
+Double-click `dist\CodexSkinStudio.exe`, add local images, adjust the brief, and generate a preview. The right panel switches between the generation flow and a local theme library. Every successful generation is kept as an independent bundle; select any historical theme to restore its preview and apply it without regenerating assets. Unused themes can be deleted after confirmation, while the theme currently applied to Codex is marked and protected from deletion.
 
 The EXE bundles its Node runtime and deterministic compiler, but not Codex or a model. It uses the user's installed and signed-in Codex CLI.
 
