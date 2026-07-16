@@ -1,6 +1,6 @@
 {
   "name": "codex-skin-studio",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Extract reference elements, generate visual assets, and safely apply a complete Codex desktop skin.",
   "author": {
     "name": "Codex Skin Studio contributors"

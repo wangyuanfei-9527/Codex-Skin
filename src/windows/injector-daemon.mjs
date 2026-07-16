@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { validateBundle } from '../bundle-validator.mjs';
 import { exists, writeJsonAtomic } from '../io.mjs';
-import { BACKGROUND_PLACEHOLDER, ICONS_PLACEHOLDER, PET_PLACEHOLDER } from '../theme-compiler.mjs';
+import { BACKGROUND_PLACEHOLDER, ICONS_PLACEHOLDER, PET_PLACEHOLDER, codexNativeTokenCss } from '../theme-compiler.mjs';
 import { buildInjectionExpression, evaluateTarget, listPageTargets } from './cdp.mjs';
 
 function option(name) {
@@ -31,7 +31,7 @@ async function main() {
   const rawCss = await fs.readFile(bundle.cssPath, 'utf8');
   const petDataUrl = bundle.pet ? await dataUrl(bundle.pet.spritesheetPath) : '';
   const iconsDataUrl = bundle.iconsPath ? await dataUrl(bundle.iconsPath) : '';
-  const css = rawCss
+  const css = `${rawCss}\n${codexNativeTokenCss(bundle.design.palette)}`
     .replaceAll(BACKGROUND_PLACEHOLDER, await dataUrl(bundle.backgroundPath))
     .replaceAll(ICONS_PLACEHOLDER, iconsDataUrl)
     .replaceAll(PET_PLACEHOLDER, petDataUrl);

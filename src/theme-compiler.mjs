@@ -33,6 +33,38 @@ function cssContent(value) {
   return JSON.stringify(String(value).replace(/[\r\n]+/g, ' ').trim());
 }
 
+export function codexNativeTokenCss(palette) {
+  const p = palette;
+  return `:root.codex-skin-studio-active {
+  --color-token-foreground: ${p.text};
+  --color-token-description-foreground: ${p.mutedText};
+  --color-token-disabled-foreground: ${hexRgba(p.mutedText, 0.56)};
+  --color-token-text-primary: ${p.text};
+  --color-token-text-secondary: ${p.mutedText};
+  --color-token-dropdown-background: ${p.surface};
+  --color-token-dropdown-foreground: ${p.text};
+  --color-token-border: ${hexRgba(p.border, 0.74)};
+  --color-token-border-default: ${hexRgba(p.border, 0.82)};
+  --color-token-border-heavy: ${p.border};
+  --color-token-border-light: ${hexRgba(p.border, 0.48)};
+  --color-token-menu-border: ${hexRgba(p.border, 0.68)};
+  --color-token-main-surface-primary: ${p.surface};
+  --color-token-bg-primary: ${p.background};
+  --color-token-bg-secondary: ${p.surface};
+  --color-token-bg-tertiary: ${p.surfaceAlt};
+  --color-token-editor-background: ${p.background};
+  --color-token-editor-foreground: ${p.text};
+  --color-token-editor-widget-background: ${p.surface};
+  --color-token-input-background: ${p.surface};
+  --color-token-input-foreground: ${p.text};
+  --color-token-input-placeholder-foreground: ${p.mutedText};
+  --color-token-input-border: ${hexRgba(p.border, 0.72)};
+  --color-token-list-hover-background: ${hexRgba(p.accent, 0.14)};
+  --color-token-list-active-selection-background: ${hexRgba(p.accent, 0.22)};
+  --color-token-side-bar-background: ${p.surface};
+}`;
+}
+
 function cssFor(spec, { includePet = true, includeGeneratedIcons = false } = {}) {
   const p = spec.palette;
   const e = spec.effects;
@@ -93,6 +125,7 @@ function cssFor(spec, { includePet = true, includeGeneratedIcons = false } = {})
   --codex-skin-border: ${p.border};
   --codex-skin-radius: ${e.radius}px;
 }
+${codexNativeTokenCss(p)}
 :root.codex-skin-studio-active body {
   color: var(--codex-skin-text) !important;
   background:

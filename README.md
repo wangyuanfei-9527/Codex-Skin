@@ -44,7 +44,7 @@ The injector targets verified Codex shell markers and can theme the sidebar, new
 
 The decorative polaroid follows the live composer position through a resize observer instead of fixed screen offsets, so resizing does not make it jump between unrelated anchors.
 
-Windows title/menu chrome, dialogs, popovers, and unknown buttons intentionally remain native. The compiler never applies global `button`, `input`, `dialog`, or menu rules.
+Windows title/menu chrome and unknown buttons intentionally remain native. Verified Codex dialogs, popovers, thread text, and composer containers inherit the generated palette through Codex's own design tokens, so their geometry and interaction behavior stay native. The compiler never applies global `button`, `input`, `dialog`, or menu rules.
 
 The Microsoft Store package, credentials, databases, user tasks, plugins, and pets are not modified. Auxiliary pet windows remain transparent and unskinned.
 
