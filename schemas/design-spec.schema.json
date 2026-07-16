@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex-skin-studio.local/schemas/design-spec.schema.json",
+  "title": "Codex Skin Studio design specification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "name",
+    "summary",
+    "sourceImageIndex",
+    "palette",
+    "effects",
+    "copy",
+    "assets",
+    "pet"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "summary": { "type": "string", "minLength": 1, "maxLength": 300 },
+    "sourceImageIndex": { "type": "integer", "minimum": 0, "maximum": 31 },
+    "palette": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["background", "surface", "surfaceAlt", "text", "mutedText", "accent", "accentAlt", "border"],
+      "properties": {
+        "background": { "$ref": "#/$defs/color" },
+        "surface": { "$ref": "#/$defs/color" },
+        "surfaceAlt": { "$ref": "#/$defs/color" },
+        "text": { "$ref": "#/$defs/color" },
+        "mutedText": { "$ref": "#/$defs/color" },
+        "accent": { "$ref": "#/$defs/color" },
+        "accentAlt": { "$ref": "#/$defs/color" },
+        "border": { "$ref": "#/$defs/color" }
+      }
+    },
+    "effects": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["blur", "surfaceOpacity", "radius", "overlayOpacity", "backgroundPosition", "focalX", "focalY", "layout"],
+      "properties": {
+        "blur": { "type": "integer", "minimum": 0, "maximum": 40 },
+        "surfaceOpacity": { "type": "number", "minimum": 0.35, "maximum": 1 },
+        "radius": { "type": "integer", "minimum": 0, "maximum": 32 },
+        "overlayOpacity": { "type": "number", "minimum": 0, "maximum": 0.8 },
+        "backgroundPosition": { "type": "string", "enum": ["center", "top", "bottom", "left", "right"] },
+        "focalX": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "focalY": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "layout": { "type": "string", "enum": ["banner", "fullscreen"] }
+      }
+    },
+    "copy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["heroTitle", "heroSubtitle", "projectLabel", "composerPlaceholder", "cardSubtitles", "signature"],
+      "properties": {
+        "heroTitle": { "type": "string", "minLength": 1, "maxLength": 70 },
+        "heroSubtitle": { "type": "string", "minLength": 1, "maxLength": 90 },
+        "projectLabel": { "type": "string", "minLength": 1, "maxLength": 24 },
+        "composerPlaceholder": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "cardSubtitles": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": { "type": "string", "minLength": 1, "maxLength": 42 }
+        },
+        "signature": { "type": "string", "minLength": 1, "maxLength": 32 }
+      }
+    },
+    "assets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subject", "motifs", "heroPrompt", "iconPrompt"],
+      "properties": {
+        "subject": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "motifs": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 4,
+          "items": { "type": "string", "minLength": 1, "maxLength": 48 }
+        },
+        "heroPrompt": { "type": "string", "minLength": 1, "maxLength": 1200 },
+        "iconPrompt": { "type": "string", "minLength": 1, "maxLength": 700 }
+      }
+    },
+    "pet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "slug", "concept", "states"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "slug": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "maxLength": 64 },
+        "concept": { "type": "string", "minLength": 1, "maxLength": 400 },
+        "states": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["idle", "running", "waiting", "success", "failed"],
+          "properties": {
+            "idle": { "$ref": "#/$defs/statePrompt" },
+            "running": { "$ref": "#/$defs/statePrompt" },
+            "waiting": { "$ref": "#/$defs/statePrompt" },
+            "success": { "$ref": "#/$defs/statePrompt" },
+            "failed": { "$ref": "#/$defs/statePrompt" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+    "statePrompt": { "type": "string", "minLength": 1, "maxLength": 220 }
+  }
+}

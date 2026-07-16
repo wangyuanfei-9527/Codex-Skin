@@ -1,0 +1,265 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { assertDesignSpec } from './design-spec.mjs';
+import { assertReferenceAnalysis } from './reference-analysis.mjs';
+import { assertSkinSpec } from './skin-spec.mjs';
+import { copyFileAtomic, exists, readJson } from './io.mjs';
+import { runProcess } from './process.mjs';
+
+const projectRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const forbiddenEvent = /(mcp[_ -]?tool|web[_ -]?search|browser|http[_ -]?request|command[_ -]?execution|exec[_ -]?command|shell)/i;
+
+async function firstExisting(lines) {
+  for (const line of lines) {
+    const candidate = line.trim();
+    if (candidate && await exists(candidate)) return path.resolve(candidate);
+  }
+  return null;
+}
+
+function configuredCommand(configured) {
+  if (path.extname(configured).toLowerCase() === '.js') {
+    return { executable: process.execPath, prefix: [configured], displayPath: configured };
+  }
+  return { executable: configured, prefix: [], displayPath: configured };
+}
+
+async function commandFromWindowsShim(shimPath) {
+  const script = path.join(path.dirname(shimPath), 'node_modules', '@openai', 'codex', 'bin', 'codex.js');
+  return await exists(script) ? { executable: process.execPath, prefix: [script], displayPath: shimPath } : null;
+}
+
+export async function resolveCodexCommand() {
+  if (process.env.CODEX_SKIN_CODEX) {
+    const configured = path.resolve(process.env.CODEX_SKIN_CODEX);
+    if (!await exists(configured)) throw new Error(`CODEX_SKIN_CODEX does not exist: ${configured}`);
+    if (process.platform === 'win32' && ['.cmd', '.ps1'].includes(path.extname(configured).toLowerCase())) {
+      const command = await commandFromWindowsShim(configured);
+      if (!command) throw new Error('CODEX_SKIN_CODEX points to a shim whose Codex Node entrypoint could not be found');
+      return command;
+    }
+    return configuredCommand(configured);
+  }
+
+  if (process.platform === 'win32') {
+    const shims = await runProcess('where.exe', ['codex.cmd']);
+    if (shims.code === 0) {
+      for (const line of shims.stdout.split(/\r?\n/)) {
+        const shim = line.trim();
+        if (!shim || !await exists(shim)) continue;
+        const command = await commandFromWindowsShim(shim);
+        if (command) return command;
+      }
+    }
+    const found = await runProcess('where.exe', ['codex.exe']);
+    const executable = found.code === 0 ? await firstExisting(found.stdout.split(/\r?\n/)) : null;
+    if (executable) return configuredCommand(executable);
+  } else {
+    const found = await runProcess('which', ['codex']);
+    const executable = found.code === 0 ? await firstExisting(found.stdout.split(/\r?\n/)) : null;
+    if (executable) return configuredCommand(executable);
+  }
+  throw new Error('Could not find the local Codex CLI. Install Codex or set CODEX_SKIN_CODEX to its executable.');
+}
+
+export async function inspectCodexRuntime() {
+  const command = await resolveCodexCommand();
+  const version = await runProcess(command.executable, [...command.prefix, '--version']);
+  if (version.code !== 0) throw new Error(`Local Codex failed to start: ${version.stderr.trim()}`);
+  const login = await runProcess(command.executable, [...command.prefix, 'login', 'status']);
+  return {
+    executable: command.displayPath,
+    version: version.stdout.trim() || version.stderr.trim(),
+    authenticated: login.code === 0,
+    authentication: (login.stdout || login.stderr).trim(),
+  };
+}
+
+function eventIdentity(value) {
+  if (!value || typeof value !== 'object') return [];
+  const candidates = [value.type, value.name, value.tool_name, value.item?.type, value.item?.name, value.item?.tool_name];
+  return candidates.filter((item) => typeof item === 'string');
+}
+
+function nestedErrorMessage(value) {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    try {
+      const parsed = JSON.parse(trimmed);
+      return nestedErrorMessage(parsed) || trimmed;
+    } catch {
+      return trimmed;
+    }
+  }
+  if (!value || typeof value !== 'object') return null;
+  return nestedErrorMessage(value.error?.message)
+    || nestedErrorMessage(value.error)
+    || nestedErrorMessage(value.message);
+}
+
+function analysisPrompt(requirements, imageCount, { includePet = true } = {}) {
+  const lines = [
+    'You are the private visual design stage of Codex Skin Studio.',
+    `Analyze the ${imageCount} attached local reference image(s) and the user brief below.`,
+    'Return only a JSON object that conforms exactly to the supplied output schema.',
+    'Do not browse, call MCP tools, run shell commands, read repository files, or include executable code.',
+    'Choose sourceImageIndex using the zero-based order of attached images.',
+    'Act as a theme director, not a color sampler: infer an original theme story, focal composition, recurring motif family, surface treatment, typography mood, and copy tone.',
+    `Express that direction concisely in the theme summary and carry the same story into the palette and effects${includePet ? ', and pet concept' : ''}.`,
+    'Choose effects.layout deliberately: fullscreen for clean artwork with a strong wide composition; banner for portraits, screenshots, text-heavy references, or imagery that needs a protected crop.',
+    'Write a coherent copy set for the hero subtitle, four short suggestion-card subtitles, composer placeholder, and a restrained theme signature. Match the user language.',
+    'Create an asset plan: name the intended subject and 3-4 recurring motifs, then write a production-ready wide hero artwork prompt and a matching 2x2 icon-atlas prompt. Both prompts must request no text, no logos, no watermarks, no borders, and no fake UI.',
+    'Use accessible, coherent #RRGGBB colors with readable text and distinct interactive accents.',
+    'Do not identify real people. If the user explicitly names a fictional character or franchise theme, preserve the character identity and signature visual traits while creating a new composition; otherwise infer an original subject from the references.',
+    '',
+    'User brief:',
+    requirements,
+  ];
+  if (includePet) lines.splice(8, 0, 'The pet must share the theme motifs, palette, and one memorable accessory while keeping a clear small-size silhouette.');
+  return lines.join('\n');
+}
+
+function referenceExtractionPrompt(imageCount) {
+  return [
+    'You are the reference-extraction stage of Codex Skin Studio.',
+    `Inspect the ${imageCount} attached reference image(s) without designing a theme yet.`,
+    'Return only a JSON object that conforms exactly to the supplied output schema.',
+    'Do not browse, call tools, run commands, read files, or include executable code.',
+    'Extract the actual subject, content, palette, composition, lighting, medium, mood, and recurring visual motifs.',
+    'If a fictional character is recognizable, name the character and list the signature traits that make the character recognizable.',
+    'Never identify a real person; use "unidentified real person" for real-person identity.',
+    'List what a later generated asset must preserve and what source artifacts must not be copied, such as embedded text, logos, watermarks, UI fragments, or unsuitable crops.',
+    'Do not invent a theme name, interface copy, asset prompt, or layout in this stage.',
+    'Keep every extracted phrase complete and comfortably below schema limits: summary <= 300 characters, composition <= 240, lighting/mood <= 180, each trait/motif <= 72, and each must-preserve/source-risk item <= 90. Never cut a word or phrase at a maximum.',
+  ].join('\n');
+}
+
+function skinPlanningPrompt(requirements, referenceAnalysis) {
+  return [
+    'You are the theme-planning and asset-prompt stage of Codex Skin Studio.',
+    'Use the verified reference extraction and user brief below. Do not re-analyze image pixels and do not generate images yet.',
+    'Return only a JSON object that conforms exactly to the supplied output schema.',
+    'Do not browse, call tools, run commands, read files, or include executable code.',
+    'Design a complete Codex skin system: accessible palette, banner/fullscreen layout, focalX/focalY crop coordinates, interface copy including heroTitle and projectLabel, subject treatment, recurring motifs, a hero-art prompt, and a matching 2x2 icon-atlas prompt.',
+    'For banner layouts, choose focalY near the face or signature feature and keep it comfortably away from the top edge; the final banner is much wider than the generated source. For fullscreen layouts, choose the natural scene focus.',
+    'The hero prompt must request a clean 16:10 application background with deliberate copy-safe space, no text, no logo, no watermark, no border, and no fake UI controls.',
+    'The icon prompt must request exactly four coordinated edge-to-edge quadrants for code exploration, feature building, review, and repair; no text, no border, no watermark.',
+    'If the extraction identifies a fictional character and the user brief asks for that character/theme, preserve the named identity and signature traits in the generated hero instead of reducing it to generic colors.',
+    'Do not copy source text, logos, watermarks, or the original composition exactly.',
+    'All user-facing fields (name, summary, heroTitle, heroSubtitle, projectLabel, composerPlaceholder, cardSubtitles, signature) must use the same language as the user brief. Asset prompts may use English for image-generation precision.',
+    'Keep strings comfortably below schema limits and finish every phrase: subject <= 80 characters, each motif <= 32, each card subtitle <= 30, signature <= 20, heroPrompt <= 950, iconPrompt <= 520. Never cut a word or sentence to reach a maximum.',
+    '',
+    'Verified reference extraction:',
+    JSON.stringify(referenceAnalysis, null, 2),
+    '',
+    'User brief:',
+    requirements,
+  ].join('\n');
+}
+
+async function analyzeWithSchema(job, { schemaFile, resultFile, assertSpec, includePet = false, prompt, attachImages = true }) {
+  const command = await resolveCodexCommand();
+  const schemaPath = path.join(job.directory, schemaFile);
+  const resultPath = path.join(job.directory, resultFile);
+  await copyFileAtomic(path.join(projectRoot, 'schemas', schemaFile), schemaPath);
+
+  const args = [
+    'exec', '--ephemeral', '--ignore-user-config', '--skip-git-repo-check',
+    '--sandbox', 'read-only', '--json', '--output-schema', schemaPath,
+    '--output-last-message', resultPath, '-C', job.directory,
+  ];
+  if (attachImages) for (const image of job.images) args.push('--image', image);
+  args.push('-');
+
+  const controller = new AbortController();
+  const violations = [];
+  const reportedErrors = [];
+  let pending = '';
+  const inspectChunk = (chunk) => {
+    pending += chunk;
+    const lines = pending.split(/\r?\n/);
+    pending = lines.pop() || '';
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      try {
+        const event = JSON.parse(line);
+        const identity = eventIdentity(event);
+        if (identity.some((item) => forbiddenEvent.test(item))) {
+          violations.push(identity.join('/'));
+          controller.abort();
+        }
+        if (event.type === 'error' || event.type === 'turn.failed' || event.type === 'item.failed') {
+          const message = nestedErrorMessage(event);
+          if (message && !reportedErrors.includes(message)) reportedErrors.push(message);
+        }
+      } catch {
+        // The CLI contract is JSONL, but an unparseable status line is not persisted.
+      }
+    }
+  };
+
+  let result;
+  try {
+    result = await runProcess(command.executable, [...command.prefix, ...args], {
+      cwd: job.directory,
+      stdin: prompt || analysisPrompt(job.requirements, job.images.length, { includePet }),
+      signal: controller.signal,
+      onStdout: inspectChunk,
+    });
+  } catch (error) {
+    if (violations.length) throw new Error(`Codex attempted a forbidden external tool call: ${violations.join(', ')}`);
+    throw error;
+  }
+  inspectChunk('\n');
+  if (violations.length) throw new Error(`Codex attempted a forbidden external tool call: ${violations.join(', ')}`);
+  if (result.code !== 0) {
+    const detail = reportedErrors.join('\n') || result.stderr.trim() || 'No error detail was returned.';
+    throw new Error(`Local Codex analysis failed (${result.code}): ${detail}`);
+  }
+  if (!await exists(resultPath)) throw new Error('Local Codex did not produce a design specification');
+  const spec = assertSpec(await readJson(resultPath));
+  if (spec.sourceImageIndex >= job.images.length) throw new Error('Design specification selected an image index that was not supplied');
+  await fs.chmod(resultPath, 0o600).catch(() => {});
+  return { spec, specPath: resultPath };
+}
+
+export async function analyzeWithLocalCodex(job) {
+  return analyzeWithSchema(job, {
+    schemaFile: 'design-spec.schema.json',
+    resultFile: 'design-spec.json',
+    assertSpec: assertDesignSpec,
+    includePet: true,
+  });
+}
+
+export async function extractReferenceAnalysisWithLocalCodex(job) {
+  return analyzeWithSchema(job, {
+    schemaFile: 'reference-analysis.schema.json',
+    resultFile: 'reference-analysis.json',
+    assertSpec: assertReferenceAnalysis,
+    prompt: referenceExtractionPrompt(job.images.length),
+    attachImages: true,
+  });
+}
+
+export async function planSkinWithLocalCodex(job, referenceAnalysis) {
+  return analyzeWithSchema(job, {
+    schemaFile: 'skin-spec.schema.json',
+    resultFile: 'skin-spec.json',
+    assertSpec: assertSkinSpec,
+    prompt: skinPlanningPrompt(job.requirements, referenceAnalysis),
+    attachImages: false,
+  });
+}
+
+export async function analyzeSkinWithLocalCodex(job) {
+  const extracted = await extractReferenceAnalysisWithLocalCodex(job);
+  const planned = await planSkinWithLocalCodex(job, extracted.spec);
+  return {
+    ...planned,
+    referenceAnalysis: extracted.spec,
+    referenceAnalysisPath: extracted.specPath,
+  };
+}

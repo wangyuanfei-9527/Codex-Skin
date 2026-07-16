@@ -1,0 +1,8 @@
+node_modules/
+.DS_Store
+*.log
+coverage/
+.codex-skin-studio/
+build/
+.omx/
+dist*/

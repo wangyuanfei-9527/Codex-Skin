@@ -1,0 +1,18 @@
+{
+  "name": "codex-skin-studio",
+  "version": "0.5.0",
+  "description": "Extract reference elements, generate visual assets, and safely apply a complete Codex desktop skin.",
+  "author": {
+    "name": "Codex Skin Studio contributors"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Codex Skin Studio",
+    "shortDescription": "Build a complete Codex skin through a gated local workflow.",
+    "longDescription": "Extract visual evidence from local references, plan every asset prompt, generate a coordinated hero and icon atlas, compile a constrained skin bundle, and stage a reversible restart.",
+    "developerName": "Codex Skin Studio contributors",
+    "category": "Developer Tools",
+    "capabilities": ["Reference extraction", "Image asset generation", "Local theme compilation"],
+    "defaultPrompt": "Use $build-codex-skin to turn my attached images into a complete Codex skin."
+  }
+}

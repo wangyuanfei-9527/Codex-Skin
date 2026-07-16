@@ -1,0 +1,5 @@
+interface:
+  display_name: "Build Codex Skin"
+  short_description: "Extract references, generate assets, and build a Codex skin"
+  default_prompt: "Use $build-codex-skin to turn my attached images into a complete Codex skin."
+
