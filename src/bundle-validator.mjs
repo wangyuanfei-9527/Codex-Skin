@@ -26,6 +26,37 @@ async function bundleFile(root, relativePath, label) {
   return filePath;
 }
 
+function normalizeLegacySpec(spec) {
+  if (!spec || typeof spec !== 'object' || Array.isArray(spec)) return spec;
+  const cjk = /[\u3400-\u9fff]/.test(`${spec.name || ''}${spec.summary || ''}`);
+  const defaults = cjk ? {
+    projectLabel: '选择项目',
+    composerPlaceholder: '写下你的下一步想法…',
+    cardTitles: ['探索代码', '构建功能', '审查改动', '修复问题'],
+    cardSubtitles: ['理解项目结构', '把想法变成实现', '检查质量与边界', '定位根因并修复'],
+    profileBadge: '主题',
+    signature: '主题工作室',
+  } : {
+    projectLabel: 'Choose a project',
+    composerPlaceholder: 'Describe your next step…',
+    cardTitles: ['Explore code', 'Build feature', 'Review changes', 'Repair issue'],
+    cardSubtitles: ['Understand the structure', 'Turn intent into code', 'Check quality and edges', 'Find and repair the cause'],
+    profileBadge: 'THEME',
+    signature: 'Theme Studio',
+  };
+  const summary = typeof spec.summary === 'string' && spec.summary.length <= 90 ? spec.summary : (cjk ? '让主题陪你专注完成下一段代码。' : 'A focused workspace shaped by your theme.');
+  return {
+    ...spec,
+    effects: { focalX: 50, focalY: 50, ...(spec.effects || {}) },
+    copy: {
+      heroTitle: String(spec.name || (cjk ? '主题工作室' : 'Theme Studio')).slice(0, 70),
+      heroSubtitle: summary,
+      ...defaults,
+      ...(spec.copy || {}),
+    },
+  };
+}
+
 export async function validateBundle(bundleDirectory, { requireReady = false } = {}) {
   const root = path.resolve(bundleDirectory);
   const manifestPath = await bundleFile(root, 'manifest.json', 'manifest');
@@ -38,7 +69,7 @@ export async function validateBundle(bundleDirectory, { requireReady = false } =
   const designPath = await bundleFile(root, manifest.design, 'manifest.design');
   const cssPath = await bundleFile(root, manifest.theme?.css, 'manifest.theme.css');
   const backgroundPath = await bundleFile(root, manifest.theme?.background, 'manifest.theme.background');
-  const design = await readJson(designPath);
+  const design = normalizeLegacySpec(await readJson(designPath));
   if (kind === 'skin') assertSkinSpec(design);
   else assertDesignSpec(design);
   await checkHash(backgroundPath, manifest.theme.backgroundSha256, 'Background');

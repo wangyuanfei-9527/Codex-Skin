@@ -40,7 +40,9 @@ For a current Codex task, use the included `$build-codex-skin` skill. It follows
 
 ## What is themed
 
-The injector targets verified Codex shell markers and can theme the sidebar, new-task control, project/task rows, section labels, profile area, header brand and signature, home hero title/subtitle/art crop, suggestion cards and generated icons, project label/selector, composer placeholder/send control, scroll treatment, code blocks, quotes, selection color, and a faint task-page art layer. The generated copy pack owns the hero title, hero subtitle, project label, four card subtitles, composer placeholder, and signature. Core navigation names remain native so their meaning and accessibility do not drift.
+The injector targets verified Codex shell markers and can theme the sidebar, new-task control, project/task rows, section labels, profile area, header brand and signature, home hero title/subtitle/art crop, suggestion cards and generated icons, project label/selector, composer placeholder/send control, scroll treatment, code blocks, quotes, selection color, and a faint task-page art layer. The generated copy pack owns the hero title, hero subtitle, project label, four card titles/subtitles, composer placeholder, profile badge, and signature. Core navigation names and the real signed-in username remain native so their meaning and accessibility do not drift.
+
+The decorative polaroid follows the live composer position through a resize observer instead of fixed screen offsets, so resizing does not make it jump between unrelated anchors.
 
 Windows title/menu chrome, dialogs, popovers, and unknown buttons intentionally remain native. The compiler never applies global `button`, `input`, `dialog`, or menu rules.
 
@@ -58,4 +60,3 @@ node .\bin\codex-skin.mjs doctor
 ```
 
 The automated suite covers strict stage artifacts, asset collection, image constraints, CSS scoping, hash tampering, path containment, skin-only apply/restore behavior, and loopback CDP validation. Live visual signoff still requires a real Codex screenshot after injection.
-

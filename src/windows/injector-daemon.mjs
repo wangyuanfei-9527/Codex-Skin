@@ -41,6 +41,8 @@ async function main() {
     name: bundle.manifest.name,
     summary: bundle.manifest.summary,
     signature: bundle.design.copy.signature,
+    cardTitles: bundle.design.copy.cardTitles,
+    cardSubtitles: bundle.design.copy.cardSubtitles,
     layout: bundle.design.effects.layout,
     petName: bundle.manifest.pet?.name || null,
   });

@@ -21,7 +21,7 @@ Stop if the extraction is vague, omits the requested subject, or copies source t
 
 ## Stage 2 — Plan the skin and every asset prompt
 
-Combine the verified extraction with the user's brief. Save `skin-spec.json` using the repository schema. Plan the full interface system: accessible palette, banner/fullscreen layout, focalX/focalY crop coordinates, user-language hero title/subtitle, project label, four card subtitles, composer placeholder, signature, recurring motifs, hero prompt, and 2×2 icon-atlas prompt.
+Combine the verified extraction with the user's brief. Save `skin-spec.json` using the repository schema. Plan the full interface system: accessible palette, banner/fullscreen layout, focalX/focalY crop coordinates, user-language hero title/subtitle, project label, four card titles/subtitles, composer placeholder, a short profile badge, signature, recurring motifs, hero prompt, and 2×2 icon-atlas prompt. The badge is decorative only; never replace the real signed-in username.
 
 Complete every prompt before generating any image. Keep strings below their safe budgets in the contract; never truncate a word or sentence at a schema maximum.
 
@@ -60,4 +60,3 @@ node .\plugin\codex-skin-studio\scripts\codex-skin.mjs restore-skin --restart
 ```
 
 The skin may restyle only verified Codex shell, sidebar, home, cards, project selector, composer, and task-surface selectors. Never apply global button/input/dialog rules. Never modify Codex package files, credentials, databases, pets, or unmanaged files.
-

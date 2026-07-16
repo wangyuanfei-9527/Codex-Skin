@@ -19,6 +19,9 @@ test('marks the real suggestion cards and keeps their labels whitespace tolerant
   const expression = buildInjectionExpression({ bundleId: 'test', css: 'body{}' });
   assert.match(expression, /group\/home-suggestions/);
   assert.match(expression, /data-skin-suggestion-index/);
+  assert.match(expression, /skin-card-copy/);
+  assert.match(expression, /skin-project-toolbar/);
   assert.match(expression, /replace\(\/\\s\+\/g/);
   assert.match(expression, /MutationObserver/);
+  assert.match(expression, /ResizeObserver/);
 });

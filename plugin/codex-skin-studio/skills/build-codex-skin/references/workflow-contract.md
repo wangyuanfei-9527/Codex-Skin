@@ -29,6 +29,8 @@ Do not create a later artifact until the preceding artifact passes validation.
 - Hero subtitle: at most 90 characters.
 - Project label: at most 24 characters.
 - Composer placeholder: at most 60 characters.
+- Each card title: at most 24 characters.
+- Profile badge: at most 10 characters; decorative only, never a replacement username.
 - Signature: at most 20 characters.
 
 User-facing copy must follow the language of the user's brief. Image prompts may use English.
@@ -53,9 +55,8 @@ Icon atlas:
 ## UI acceptance
 
 - Native menu and unrelated buttons retain official geometry; no global outlines.
-- Sidebar, new-task control, project/task rows, section labels, profile area, header brand/signature, hero title/subtitle/crop, cards/icons/subtitles, project label/selector, composer placeholder/send control, code blocks, quotes, selection color, scroll treatment, and normal task background share one theme system.
+- Sidebar, new-task control, project/task rows, section labels, profile area/badge, header brand/signature, hero title/subtitle/crop, cards/icons/titles/subtitles, project label/selector, composer placeholder/send control, code blocks, quotes, selection color, scroll treatment, and normal task background share one theme system.
 - Core navigation labels, title/menu chrome, dialogs, popovers, and unknown controls remain native.
 - All decorative layers use `pointer-events: none` and never cover real controls.
 - Auxiliary pet windows remain transparent and unskinned.
 - Reject weak character relevance, raw-image fallback, ghost text, fake UI, low contrast, excessive borders, or an incomplete asset prompt.
-

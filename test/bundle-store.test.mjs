@@ -80,10 +80,35 @@ test('compiles a skin-only bundle with native Codex layout selectors and no pet'
   assert.match(css, /main\.main-surface/);
   assert.match(css, /codex-skin-home/);
   assert.match(css, /data-skin-suggestion-index/);
+  assert.match(css, /skin-card-copy/);
+  assert.match(css, /skin-project-toolbar/);
+  assert.match(css, /codex-skin-composer-top/);
+  assert.match(css, /padding-right: 72px/);
   assert.match(css, /background-size: 100% 100%, auto 118%/);
   assert.match(css, /CODEX_SKIN_ICONS_DATA_URL/);
   assert.doesNotMatch(css, /codex-skin-studio-active button,/);
   assert.doesNotMatch(css, /codex-skin-studio-background/);
+  assert.doesNotMatch(css, /\.group\/(?:home|project)/);
+});
+
+test('normalizes legacy skin copy and focal fields when validating an existing bundle', async () => {
+  const files = await fixture();
+  const output = path.join(files.root, 'legacy-skin');
+  const { pet, ...skin } = sampleSpec();
+  await compileBundle({ spec: skin, images: [files.background], outputDirectory: output, skinOnly: true });
+  const designPath = path.join(output, 'design.json');
+  const legacy = JSON.parse(await fs.readFile(designPath, 'utf8'));
+  delete legacy.effects.focalX;
+  delete legacy.effects.focalY;
+  delete legacy.copy.heroTitle;
+  delete legacy.copy.projectLabel;
+  delete legacy.copy.cardTitles;
+  delete legacy.copy.profileBadge;
+  await fs.writeFile(designPath, JSON.stringify(legacy));
+  const checked = await validateBundle(output, { requireReady: true });
+  assert.equal(checked.design.effects.focalX, 50);
+  assert.equal(checked.design.copy.cardTitles.length, 4);
+  assert.equal(checked.design.copy.profileBadge, 'THEME');
 });
 
 test('skin apply and restore do not modify installed pets', { concurrency: false }, async () => {

@@ -69,6 +69,7 @@ export function buildInjectionExpression(payload) {
     const stateKey = '__CODEX_SKIN_STUDIO_STATE__';
     const previousState = window[stateKey];
     previousState?.observer?.disconnect();
+    previousState?.resizeObserver?.disconnect();
     if (previousState?.timer) clearTimeout(previousState.timer);
     const payload = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob('${encoded}'), character => character.charCodeAt(0))));
     const root = document.documentElement;
@@ -80,6 +81,12 @@ export function buildInjectionExpression(payload) {
       document.querySelectorAll('.codex-skin-home').forEach(node => node.classList.remove('codex-skin-home'));
       document.querySelectorAll('.skin-home-shell').forEach(node => node.classList.remove('skin-home-shell'));
       document.querySelectorAll('.skin-new-task').forEach(node => node.classList.remove('skin-new-task'));
+      document.querySelectorAll('.skin-project-toolbar').forEach(node => node.classList.remove('skin-project-toolbar'));
+      document.querySelectorAll('.skin-card-copy').forEach(node => node.remove());
+      document.querySelectorAll('[data-skin-generated-aria-label]').forEach(node => {
+        node.removeAttribute('aria-label');
+        node.removeAttribute('data-skin-generated-aria-label');
+      });
       document.querySelectorAll('[data-skin-suggestion-index]').forEach(node => node.removeAttribute('data-skin-suggestion-index'));
       document.getElementById('codex-skin-studio-style')?.remove();
       document.getElementById('codex-skin-studio-chrome')?.remove();
@@ -119,19 +126,51 @@ export function buildInjectionExpression(payload) {
       ['修复问题', 'Fix an issue', 'Fix issues'],
     ];
     const newTaskLabels = ['新建任务', 'New task'];
+    const applyCardCopy = (button, index) => {
+      const title = payload.cardTitles?.[index];
+      const subtitle = payload.cardSubtitles?.[index];
+      if (!title || !subtitle) return;
+      if (!button.hasAttribute('aria-label')) {
+        const nativeLabel = (button.textContent || '').replace(/\\s+/g, ' ').trim();
+        if (nativeLabel) {
+          button.setAttribute('aria-label', nativeLabel);
+          button.setAttribute('data-skin-generated-aria-label', 'true');
+        }
+      }
+      let copy = button.querySelector(':scope > .skin-card-copy');
+      if (!copy) {
+        copy = document.createElement('span');
+        copy.className = 'skin-card-copy';
+        copy.setAttribute('aria-hidden', 'true');
+        copy.append(document.createElement('b'), document.createElement('small'));
+        button.appendChild(copy);
+      }
+      copy.querySelector('b').textContent = title;
+      copy.querySelector('small').textContent = subtitle;
+    };
     const markNativeControls = () => {
       home?.querySelectorAll('[data-skin-suggestion-index]').forEach(node => node.removeAttribute('data-skin-suggestion-index'));
       if (home) {
         const groupButtons = [...home.querySelectorAll('[class~="group/home-suggestions"] button')];
         if (groupButtons.length >= 2 && groupButtons.length <= 4) {
-          groupButtons.forEach((button, index) => button.setAttribute('data-skin-suggestion-index', String(index)));
+          groupButtons.forEach((button, index) => {
+            button.setAttribute('data-skin-suggestion-index', String(index));
+            applyCardCopy(button, index);
+          });
         } else {
           for (const button of home.querySelectorAll('button')) {
             const label = (button.textContent || '').replace(/\\s+/g, ' ').trim();
             const index = suggestionLabels.findIndex(variants => variants.some(variant => label.includes(variant)));
-            if (index >= 0) button.setAttribute('data-skin-suggestion-index', String(index));
+            if (index >= 0) {
+              button.setAttribute('data-skin-suggestion-index', String(index));
+              applyCardCopy(button, index);
+            }
           }
         }
+        home.querySelectorAll('.skin-project-toolbar').forEach(node => node.classList.remove('skin-project-toolbar'));
+        const projectSelector = home.querySelector('[class~="group/project-selector"]');
+        const fadeMask = projectSelector?.closest('.horizontal-scroll-fade-mask, [class*="horizontal-scroll-fade-mask"]');
+        fadeMask?.parentElement?.classList.add('skin-project-toolbar');
       }
       for (const button of shellSidebar.querySelectorAll('nav button')) {
         const isNewTask = newTaskLabels.some(label => (button.textContent || '').includes(label));
@@ -145,7 +184,8 @@ export function buildInjectionExpression(payload) {
       scheduler.timer = setTimeout(markNativeControls, 120);
     });
     observer.observe(document.documentElement, { childList: true, subtree: true });
-    window[stateKey] = { observer, get timer() { return scheduler.timer; } };
+    const state = { observer, get timer() { return scheduler.timer; } };
+    window[stateKey] = state;
 
     let chrome = document.getElementById('codex-skin-studio-chrome');
     if (!chrome) {
@@ -158,12 +198,26 @@ export function buildInjectionExpression(payload) {
     chrome.querySelector('.skin-brand b').textContent = payload.name;
     chrome.querySelector('.skin-brand small').textContent = payload.summary;
     chrome.querySelector('.skin-signature').textContent = payload.signature || '';
-    const shellBox = shellMain.getBoundingClientRect();
-    chrome.style.left = Math.round(shellBox.left) + 'px';
-    chrome.style.top = Math.round(shellBox.top) + 'px';
-    chrome.style.width = Math.round(shellBox.width) + 'px';
-    chrome.style.height = Math.round(shellBox.height) + 'px';
     chrome.classList.toggle('skin-home-shell', Boolean(home));
+    const syncChromeGeometry = () => {
+      const shellBox = shellMain.getBoundingClientRect();
+      chrome.style.left = Math.round(shellBox.left) + 'px';
+      chrome.style.top = Math.round(shellBox.top) + 'px';
+      chrome.style.width = Math.round(shellBox.width) + 'px';
+      chrome.style.height = Math.round(shellBox.height) + 'px';
+      const composer = home?.querySelector('.composer-surface-chrome');
+      if (composer) {
+        const composerBox = composer.getBoundingClientRect();
+        chrome.style.setProperty('--codex-skin-composer-top', Math.round(composerBox.top - shellBox.top) + 'px');
+      } else {
+        chrome.style.removeProperty('--codex-skin-composer-top');
+      }
+    };
+    syncChromeGeometry();
+    const resizeObserver = new ResizeObserver(syncChromeGeometry);
+    resizeObserver.observe(shellMain);
+    if (home) resizeObserver.observe(home);
+    state.resizeObserver = resizeObserver;
 
     const existingPet = document.getElementById('codex-skin-studio-pet');
     if (payload.petName) {

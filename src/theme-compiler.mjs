@@ -166,6 +166,7 @@ function cssFor(spec, { includePet = true, includeGeneratedIcons = false } = {})
 :root.codex-skin-studio-active aside.app-shell-left-panel button[aria-label="打开个人资料菜单"],
 :root.codex-skin-studio-active aside.app-shell-left-panel button[aria-label="Open profile menu"] {
   position: relative !important;
+  padding-right: 72px !important;
   border: 0 !important;
   border-radius: calc(var(--codex-skin-radius) + 2px) !important;
   background: linear-gradient(135deg, ${hexRgba(p.surface, 0.98)}, ${hexRgba(p.accentAlt, 0.18)}) !important;
@@ -173,11 +174,15 @@ function cssFor(spec, { includePet = true, includeGeneratedIcons = false } = {})
 }
 :root.codex-skin-studio-active aside.app-shell-left-panel button[aria-label="打开个人资料菜单"]::after,
 :root.codex-skin-studio-active aside.app-shell-left-panel button[aria-label="Open profile menu"]::after {
-  content: "✦";
+  content: ${cssContent(c.profileBadge)};
   position: absolute;
-  right: 9px;
-  top: 4px;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--codex-skin-accent-alt);
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: .06em;
   pointer-events: none;
 }
 :root.codex-skin-studio-active aside.app-shell-left-panel [class~="bg-token-list-hover-background"],
@@ -269,10 +274,10 @@ function cssFor(spec, { includePet = true, includeGeneratedIcons = false } = {})
 #codex-skin-studio-chrome .skin-sparkles i:nth-child(4) { left: 86%; top: 10%; }
 #codex-skin-studio-chrome .skin-polaroid {
   position: absolute;
-  right: 15px;
-  bottom: 78px;
-  width: 104px;
-  height: 130px;
+  right: clamp(14px, 1.5vw, 28px);
+  top: clamp(150px, calc(var(--codex-skin-composer-top, 100%) - 150px), calc(100% - 142px));
+  width: clamp(84px, 6.3vw, 112px);
+  aspect-ratio: 4 / 5;
   display: none;
   background-image: url("${BACKGROUND_PLACEHOLDER}");
   background-size: cover;
@@ -280,7 +285,9 @@ function cssFor(spec, { includePet = true, includeGeneratedIcons = false } = {})
   border: 7px solid ${hexRgba(p.surface, 0.97)};
   border-bottom-width: 18px;
   box-shadow: 0 9px 20px ${hexRgba(p.text, 0.20)}, 0 0 0 1px var(--codex-skin-border);
-  transform: rotate(-6deg);
+  transform: rotate(-4deg);
+  transform-origin: 100% 100%;
+  transition: opacity .18s ease-out, transform .18s ease-out;
 }
 #codex-skin-studio-chrome.skin-home-shell .skin-polaroid { display: block; }
 .codex-skin-home {
@@ -368,11 +375,11 @@ function cssFor(spec, { includePet = true, includeGeneratedIcons = false } = {})
   top: 100% !important;
   margin-top: 13px !important;
 }
-.codex-skin-home .group\/home-suggestions { overflow: visible !important; }
+.codex-skin-home [class~="group/home-suggestions"] { overflow: visible !important; }
 :is(${suggestionButtons}) {
   position: relative !important;
   min-height: 126px !important;
-  padding: 66px 13px 34px !important;
+  padding: 66px 13px 12px !important;
   align-items: center !important;
   justify-content: center !important;
   text-align: center !important;
@@ -395,7 +402,36 @@ function cssFor(spec, { includePet = true, includeGeneratedIcons = false } = {})
   text-align: center !important;
   color: var(--codex-skin-text) !important;
 }
-:is(${suggestionButtons})::after {
+:is(${suggestionButtons}) > :not(.skin-card-copy) { opacity: 0 !important; }
+:is(${suggestionButtons}) > .skin-card-copy {
+  position: absolute !important;
+  left: 12px !important;
+  right: 12px !important;
+  top: 69px !important;
+  bottom: 10px !important;
+  z-index: 2;
+  display: flex !important;
+  width: auto !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  opacity: 1 !important;
+  pointer-events: none;
+}
+:is(${suggestionButtons}) > .skin-card-copy b {
+  color: var(--codex-skin-text) !important;
+  font-size: 13px !important;
+  font-weight: 720 !important;
+  line-height: 1.25 !important;
+}
+:is(${suggestionButtons}) > .skin-card-copy small {
+  color: var(--codex-skin-muted-text) !important;
+  font-size: 10.5px !important;
+  font-weight: 520 !important;
+  line-height: 1.3 !important;
+  opacity: .96 !important;
+}
+:is(${suggestionButtons}):not(:has(> .skin-card-copy))::after {
   position: absolute;
   left: 10px;
   right: 10px;
@@ -407,10 +443,10 @@ function cssFor(spec, { includePet = true, includeGeneratedIcons = false } = {})
   text-align: center;
   pointer-events: none;
 }
-.codex-skin-home button[data-skin-suggestion-index="0"]::after { content: ${cssContent(c.cardSubtitles[0])}; }
-.codex-skin-home button[data-skin-suggestion-index="1"]::after { content: ${cssContent(c.cardSubtitles[1])}; }
-.codex-skin-home button[data-skin-suggestion-index="2"]::after { content: ${cssContent(c.cardSubtitles[2])}; }
-.codex-skin-home button[data-skin-suggestion-index="3"]::after { content: ${cssContent(c.cardSubtitles[3])}; }
+.codex-skin-home button[data-skin-suggestion-index="0"]:not(:has(> .skin-card-copy))::after { content: ${cssContent(c.cardSubtitles[0])}; }
+.codex-skin-home button[data-skin-suggestion-index="1"]:not(:has(> .skin-card-copy))::after { content: ${cssContent(c.cardSubtitles[1])}; }
+.codex-skin-home button[data-skin-suggestion-index="2"]:not(:has(> .skin-card-copy))::after { content: ${cssContent(c.cardSubtitles[2])}; }
+.codex-skin-home button[data-skin-suggestion-index="3"]:not(:has(> .skin-card-copy))::after { content: ${cssContent(c.cardSubtitles[3])}; }
 :root.codex-skin-studio-active .composer-surface-chrome {
   border: 0 !important;
   border-radius: calc(var(--codex-skin-radius) + 8px) !important;
@@ -430,13 +466,15 @@ function cssFor(spec, { includePet = true, includeGeneratedIcons = false } = {})
   content: ${cssContent(c.composerPlaceholder)} !important;
   color: var(--codex-skin-muted-text) !important;
 }
-.codex-skin-home div:has(> .horizontal-scroll-fade-mask .group\/project-selector) {
+:is(.codex-skin-home .skin-project-toolbar, .codex-skin-home div:has(> .horizontal-scroll-fade-mask [class~="group/project-selector"])) {
   position: relative;
   padding-top: 28px !important;
   border: 0 !important;
   background: linear-gradient(180deg, ${hexRgba(p.surface, 0.96)}, ${hexRgba(p.surfaceAlt, 0.92)}) !important;
+  color: var(--codex-skin-text) !important;
+  box-shadow: inset 0 1px ${hexRgba(p.accent, 0.16)} !important;
 }
-.codex-skin-home div:has(> .horizontal-scroll-fade-mask .group\/project-selector)::before {
+:is(.codex-skin-home .skin-project-toolbar, .codex-skin-home div:has(> .horizontal-scroll-fade-mask [class~="group/project-selector"]))::before {
   content: ${cssContent(`✦  ${c.projectLabel}`)};
   position: absolute;
   left: 13px;
@@ -446,7 +484,8 @@ function cssFor(spec, { includePet = true, includeGeneratedIcons = false } = {})
   font-weight: 700;
   white-space: nowrap;
 }
-.codex-skin-home .group\/project-selector > button {
+.codex-skin-home .skin-project-toolbar * { color: var(--codex-skin-text) !important; }
+.codex-skin-home [class~="group/project-selector"] > button {
   border: 0 !important;
   background: linear-gradient(135deg, ${hexRgba(p.surface, 0.96)}, ${hexRgba(p.surfaceAlt, 0.90)}) !important;
   color: var(--codex-skin-text) !important;
@@ -530,7 +569,7 @@ function cssFor(spec, { includePet = true, includeGeneratedIcons = false } = {})
 :root.skin-layout-fullscreen .codex-skin-home > div:first-child > div:nth-child(2) > div:last-child { padding-top: 0 !important; padding-bottom: 16px !important; }
 :root.skin-layout-fullscreen #codex-skin-studio-chrome .skin-polaroid { display: none !important; }
 @media (max-width: 1120px) {
-  #codex-skin-studio-chrome .skin-polaroid { display: none !important; }
+  #codex-skin-studio-chrome .skin-polaroid { opacity: 0; transform: rotate(-2deg) scale(.84); }
   .codex-skin-home { --thread-content-max-width: min(860px, calc(100cqw - 30px)) !important; }
   .codex-skin-home > div:first-child > div:first-child > div:first-child { width: calc(100% - 28px) !important; }
 }

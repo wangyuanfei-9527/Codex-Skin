@@ -52,17 +52,23 @@ export function validateDesignSpec(spec) {
     if (!Number.isInteger(spec.effects.focalY) || spec.effects.focalY < 0 || spec.effects.focalY > 100) errors.push('spec.effects.focalY must be 0-100');
     if (!LAYOUT.has(spec.effects.layout)) errors.push('spec.effects.layout is invalid');
   }
-  const copyKeys = ['heroTitle', 'heroSubtitle', 'projectLabel', 'composerPlaceholder', 'cardSubtitles', 'signature'];
+  const copyKeys = ['heroTitle', 'heroSubtitle', 'projectLabel', 'composerPlaceholder', 'cardTitles', 'cardSubtitles', 'profileBadge', 'signature'];
   if (exactKeys(spec.copy, copyKeys, 'spec.copy', errors)) {
     if (!text(spec.copy.heroTitle, 70)) errors.push('spec.copy.heroTitle must contain 1-70 characters');
     if (!text(spec.copy.heroSubtitle, 90)) errors.push('spec.copy.heroSubtitle must contain 1-90 characters');
     if (!text(spec.copy.projectLabel, 24)) errors.push('spec.copy.projectLabel must contain 1-24 characters');
     if (!text(spec.copy.composerPlaceholder, 60)) errors.push('spec.copy.composerPlaceholder must contain 1-60 characters');
+    if (!Array.isArray(spec.copy.cardTitles) || spec.copy.cardTitles.length !== 4) {
+      errors.push('spec.copy.cardTitles must contain exactly 4 strings');
+    } else {
+      for (const [index, value] of spec.copy.cardTitles.entries()) if (!text(value, 24)) errors.push(`spec.copy.cardTitles[${index}] must contain 1-24 characters`);
+    }
     if (!Array.isArray(spec.copy.cardSubtitles) || spec.copy.cardSubtitles.length !== 4) {
       errors.push('spec.copy.cardSubtitles must contain exactly 4 strings');
     } else {
       for (const [index, value] of spec.copy.cardSubtitles.entries()) if (!text(value, 36)) errors.push(`spec.copy.cardSubtitles[${index}] must contain 1-36 characters`);
     }
+    if (!text(spec.copy.profileBadge, 10)) errors.push('spec.copy.profileBadge must contain 1-10 characters');
     if (!text(spec.copy.signature, 26)) errors.push('spec.copy.signature must contain 1-26 characters');
   }
   const assetKeys = ['subject', 'motifs', 'heroPrompt', 'iconPrompt'];

@@ -40,7 +40,9 @@ export function sampleSpec(overrides = {}) {
       heroSubtitle: 'Write calm, deliberate code beneath the aurora.',
       projectLabel: 'Choose a project',
       composerPlaceholder: 'Build something luminous…',
+      cardTitles: ['Explore the code', 'Build a feature', 'Review changes', 'Repair a defect'],
       cardSubtitles: ['Understand the codebase', 'Shape a new feature', 'Review with confidence', 'Find and repair defects'],
+      profileBadge: 'AURORA',
       signature: 'Aurora ✦',
     },
     assets: {

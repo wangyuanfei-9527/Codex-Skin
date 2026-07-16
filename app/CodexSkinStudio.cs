@@ -24,8 +24,8 @@ using Microsoft.Win32;
 [assembly: AssemblyDescription("Local-first Codex theme and pet studio")]
 [assembly: AssemblyCompany("Codex Skin Studio contributors")]
 [assembly: AssemblyProduct("Codex Skin Studio")]
-[assembly: AssemblyVersion("0.5.0.0")]
-[assembly: AssemblyFileVersion("0.5.0.0")]
+[assembly: AssemblyVersion("0.6.0.0")]
+[assembly: AssemblyFileVersion("0.6.0.0")]
 
 namespace CodexSkinStudio
 {
@@ -35,7 +35,7 @@ namespace CodexSkinStudio
         private static void Main()
         {
             bool created;
-            using (var mutex = new Mutex(true, "CodexSkinStudio.Portable.0.5", out created))
+            using (var mutex = new Mutex(true, "CodexSkinStudio.Portable.0.6", out created))
             {
                 if (!created)
                 {
@@ -68,7 +68,7 @@ namespace CodexSkinStudio
 
     internal static class RuntimeBootstrap
     {
-        private const string Version = "0.5.0";
+        private const string Version = "0.6.0";
 
         public static RuntimeFiles Ensure()
         {
@@ -182,6 +182,7 @@ namespace CodexSkinStudio
         private readonly List<Border> swatches = new List<Border>();
         private readonly List<Border> previewCards = new List<Border>();
         private readonly List<Border> previewAccents = new List<Border>();
+        private readonly List<TextBlock> previewCardTitles = new List<TextBlock>();
         private readonly List<TextBlock> previewCardSubtitles = new List<TextBlock>();
         private readonly List<Image> previewIconImages = new List<Image>();
 
@@ -395,10 +396,10 @@ namespace CodexSkinStudio
                   </Grid>
                 </Border>
                 <UniformGrid Grid.Row='2' Columns='4' Margin='0,8,0,8'>
-                  <Border x:Name='MockCard1' Background='#FFF8FA' BorderBrush='#E2D5DD' BorderThickness='1' CornerRadius='8' Margin='0,0,5,0' Padding='8'><StackPanel VerticalAlignment='Center'><Border x:Name='MockAccent1' Width='30' Height='30' CornerRadius='15' Background='#F1A3B7' HorizontalAlignment='Center' ClipToBounds='True'><Image x:Name='MockIcon1' Stretch='UniformToFill'/></Border><TextBlock Text='探索并理解代码' FontSize='8.5' FontWeight='SemiBold' HorizontalAlignment='Center' Margin='0,6,0,0'/><TextBlock x:Name='MockCardSubtitle1' Text='快速读懂结构与逻辑' FontSize='7' Opacity='.58' HorizontalAlignment='Center' Margin='0,3,0,0'/></StackPanel></Border>
-                  <Border x:Name='MockCard2' Background='#FFF8FA' BorderBrush='#E2D5DD' BorderThickness='1' CornerRadius='8' Margin='2.5,0' Padding='8'><StackPanel VerticalAlignment='Center'><Border x:Name='MockAccent2' Width='30' Height='30' CornerRadius='15' Background='#F1A3B7' HorizontalAlignment='Center' ClipToBounds='True'><Image x:Name='MockIcon2' Stretch='UniformToFill'/></Border><TextBlock Text='构建新功能' FontSize='8.5' FontWeight='SemiBold' HorizontalAlignment='Center' Margin='0,6,0,0'/><TextBlock x:Name='MockCardSubtitle2' Text='把灵感稳稳变成实现' FontSize='7' Opacity='.58' HorizontalAlignment='Center' Margin='0,3,0,0'/></StackPanel></Border>
-                  <Border x:Name='MockCard3' Background='#FFF8FA' BorderBrush='#E2D5DD' BorderThickness='1' CornerRadius='8' Margin='2.5,0' Padding='8'><StackPanel VerticalAlignment='Center'><Border x:Name='MockAccent3' Width='30' Height='30' CornerRadius='15' Background='#F1A3B7' HorizontalAlignment='Center' ClipToBounds='True'><Image x:Name='MockIcon3' Stretch='UniformToFill'/></Border><TextBlock Text='审查与验证' FontSize='8.5' FontWeight='SemiBold' HorizontalAlignment='Center' Margin='0,6,0,0'/><TextBlock x:Name='MockCardSubtitle3' Text='检查质量与边界' FontSize='7' Opacity='.58' HorizontalAlignment='Center' Margin='0,3,0,0'/></StackPanel></Border>
-                  <Border x:Name='MockCard4' Background='#FFF8FA' BorderBrush='#E2D5DD' BorderThickness='1' CornerRadius='8' Margin='5,0,0,0' Padding='8'><StackPanel VerticalAlignment='Center'><Border x:Name='MockAccent4' Width='30' Height='30' CornerRadius='15' Background='#F1A3B7' HorizontalAlignment='Center' ClipToBounds='True'><Image x:Name='MockIcon4' Stretch='UniformToFill'/></Border><TextBlock Text='修复问题' FontSize='8.5' FontWeight='SemiBold' HorizontalAlignment='Center' Margin='0,6,0,0'/><TextBlock x:Name='MockCardSubtitle4' Text='定位根因并修复' FontSize='7' Opacity='.58' HorizontalAlignment='Center' Margin='0,3,0,0'/></StackPanel></Border>
+                  <Border x:Name='MockCard1' Background='#FFF8FA' BorderBrush='#E2D5DD' BorderThickness='1' CornerRadius='8' Margin='0,0,5,0' Padding='8'><StackPanel VerticalAlignment='Center'><Border x:Name='MockAccent1' Width='30' Height='30' CornerRadius='15' Background='#F1A3B7' HorizontalAlignment='Center' ClipToBounds='True'><Image x:Name='MockIcon1' Stretch='UniformToFill'/></Border><TextBlock x:Name='MockCardTitle1' Text='探索并理解代码' FontSize='8.5' FontWeight='SemiBold' HorizontalAlignment='Center' Margin='0,6,0,0'/><TextBlock x:Name='MockCardSubtitle1' Text='快速读懂结构与逻辑' FontSize='7' Opacity='.72' HorizontalAlignment='Center' Margin='0,3,0,0'/></StackPanel></Border>
+                  <Border x:Name='MockCard2' Background='#FFF8FA' BorderBrush='#E2D5DD' BorderThickness='1' CornerRadius='8' Margin='2.5,0' Padding='8'><StackPanel VerticalAlignment='Center'><Border x:Name='MockAccent2' Width='30' Height='30' CornerRadius='15' Background='#F1A3B7' HorizontalAlignment='Center' ClipToBounds='True'><Image x:Name='MockIcon2' Stretch='UniformToFill'/></Border><TextBlock x:Name='MockCardTitle2' Text='构建新功能' FontSize='8.5' FontWeight='SemiBold' HorizontalAlignment='Center' Margin='0,6,0,0'/><TextBlock x:Name='MockCardSubtitle2' Text='把灵感稳稳变成实现' FontSize='7' Opacity='.72' HorizontalAlignment='Center' Margin='0,3,0,0'/></StackPanel></Border>
+                  <Border x:Name='MockCard3' Background='#FFF8FA' BorderBrush='#E2D5DD' BorderThickness='1' CornerRadius='8' Margin='2.5,0' Padding='8'><StackPanel VerticalAlignment='Center'><Border x:Name='MockAccent3' Width='30' Height='30' CornerRadius='15' Background='#F1A3B7' HorizontalAlignment='Center' ClipToBounds='True'><Image x:Name='MockIcon3' Stretch='UniformToFill'/></Border><TextBlock x:Name='MockCardTitle3' Text='审查与验证' FontSize='8.5' FontWeight='SemiBold' HorizontalAlignment='Center' Margin='0,6,0,0'/><TextBlock x:Name='MockCardSubtitle3' Text='检查质量与边界' FontSize='7' Opacity='.72' HorizontalAlignment='Center' Margin='0,3,0,0'/></StackPanel></Border>
+                  <Border x:Name='MockCard4' Background='#FFF8FA' BorderBrush='#E2D5DD' BorderThickness='1' CornerRadius='8' Margin='5,0,0,0' Padding='8'><StackPanel VerticalAlignment='Center'><Border x:Name='MockAccent4' Width='30' Height='30' CornerRadius='15' Background='#F1A3B7' HorizontalAlignment='Center' ClipToBounds='True'><Image x:Name='MockIcon4' Stretch='UniformToFill'/></Border><TextBlock x:Name='MockCardTitle4' Text='修复问题' FontSize='8.5' FontWeight='SemiBold' HorizontalAlignment='Center' Margin='0,6,0,0'/><TextBlock x:Name='MockCardSubtitle4' Text='定位根因并修复' FontSize='7' Opacity='.72' HorizontalAlignment='Center' Margin='0,3,0,0'/></StackPanel></Border>
                 </UniformGrid>
                 <Border x:Name='MockComposer' Grid.Row='3' Background='#FFFAFC' BorderBrush='#DFD2DA' BorderThickness='1' CornerRadius='12' Padding='13,9'>
                   <Grid><Grid.ColumnDefinitions><ColumnDefinition Width='*'/><ColumnDefinition Width='Auto'/></Grid.ColumnDefinitions><StackPanel><TextBlock x:Name='MockComposerPlaceholder' Text='和 Codex 一起构建什么？' FontSize='10.5' Opacity='.65'/><TextBlock Text='＋   完全访问     ♡' FontSize='8.5' Margin='0,9,0,0' Opacity='.62'/></StackPanel><Border x:Name='MockAccent5' Grid.Column='1' Width='31' Height='31' CornerRadius='16' Background='#E987A3' VerticalAlignment='Center'><TextBlock Text='↑' FontSize='15' FontWeight='Bold' HorizontalAlignment='Center' VerticalAlignment='Center'/></Border></Grid>
@@ -505,6 +506,7 @@ namespace CodexSkinStudio
             for (int index = 1; index <= 6; index++) swatches.Add(Find<Border>("Swatch" + index));
             for (int index = 1; index <= 4; index++) previewCards.Add(Find<Border>("MockCard" + index));
             for (int index = 1; index <= 5; index++) previewAccents.Add(Find<Border>("MockAccent" + index));
+            for (int index = 1; index <= 4; index++) previewCardTitles.Add(Find<TextBlock>("MockCardTitle" + index));
             for (int index = 1; index <= 4; index++) previewCardSubtitles.Add(Find<TextBlock>("MockCardSubtitle" + index));
             for (int index = 1; index <= 4; index++) previewIconImages.Add(Find<Image>("MockIcon" + index));
         }
@@ -738,6 +740,12 @@ namespace CodexSkinStudio
                 mockHeroSummary.Text = Convert.ToString(copy["heroSubtitle"]);
                 mockComposerPlaceholder.Text = Convert.ToString(copy["composerPlaceholder"]);
                 mockSignature.Text = Convert.ToString(copy["signature"]);
+                object[] titles = copy.ContainsKey("cardTitles") ? copy["cardTitles"] as object[] : null;
+                if (titles != null)
+                {
+                    for (int index = 0; index < previewCardTitles.Count && index < titles.Length; index++)
+                        previewCardTitles[index].Text = Convert.ToString(titles[index]);
+                }
                 object[] subtitles = copy["cardSubtitles"] as object[];
                 if (subtitles != null)
                 {

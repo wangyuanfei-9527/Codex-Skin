@@ -43,18 +43,25 @@
     "copy": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["heroTitle", "heroSubtitle", "projectLabel", "composerPlaceholder", "cardSubtitles", "signature"],
+      "required": ["heroTitle", "heroSubtitle", "projectLabel", "composerPlaceholder", "cardTitles", "cardSubtitles", "profileBadge", "signature"],
       "properties": {
         "heroTitle": { "type": "string", "minLength": 1, "maxLength": 70 },
         "heroSubtitle": { "type": "string", "minLength": 1, "maxLength": 90 },
         "projectLabel": { "type": "string", "minLength": 1, "maxLength": 24 },
         "composerPlaceholder": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "cardTitles": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": { "type": "string", "minLength": 1, "maxLength": 24 }
+        },
         "cardSubtitles": {
           "type": "array",
           "minItems": 4,
           "maxItems": 4,
           "items": { "type": "string", "minLength": 1, "maxLength": 42 }
         },
+        "profileBadge": { "type": "string", "minLength": 1, "maxLength": 10 },
         "signature": { "type": "string", "minLength": 1, "maxLength": 32 }
       }
     },
