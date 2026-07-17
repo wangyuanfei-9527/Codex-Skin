@@ -2244,7 +2244,34 @@ namespace CodexSkinStudio
             CliFailure failure = ParseCliFailure(result);
             if (IsCodexCliUnavailable(failure.Code, failure.Message))
                 throw new CodexCliUnavailableException(failure.Message);
+            if (String.Equals(failure.Code, "SPEC_VALIDATION_FAILED", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException(FormatSpecificationFailure(failure.Message));
             throw new InvalidOperationException(failure.Message);
+        }
+
+        private static string FormatSpecificationFailure(string message)
+        {
+            string detail = message ?? String.Empty;
+            detail = detail.Replace("Generated specification remained invalid after one automatic correction:\n", String.Empty)
+                .Replace("Invalid skin specification:\n", String.Empty)
+                .Replace("Invalid design specification:\n", String.Empty);
+            detail = System.Text.RegularExpressions.Regex.Replace(
+                detail,
+                @"- spec\.assets\.heroPrompt contains (\d+) characters; maximum is (\d+)",
+                "- 主视觉提示词为 $1 个字符，最多允许 $2 个字符。");
+            detail = System.Text.RegularExpressions.Regex.Replace(
+                detail,
+                @"- spec\.assets\.iconPrompt contains (\d+) characters; maximum is (\d+)",
+                "- 图标提示词为 $1 个字符，最多允许 $2 个字符。");
+            detail = System.Text.RegularExpressions.Regex.Replace(
+                detail,
+                @"- spec\.assets\.heroPrompt must end with sentence punctuation[^\r\n]*",
+                "- 主视觉提示词必须以句号、问号或感叹号结束。");
+            detail = System.Text.RegularExpressions.Regex.Replace(
+                detail,
+                @"- spec\.assets\.iconPrompt must end with sentence punctuation[^\r\n]*",
+                "- 图标提示词必须以句号、问号或感叹号结束。");
+            return "主题规划结果已自动重新生成一次，但仍未通过完整性校验。\n\n" + detail.Trim();
         }
 
         private void ShowOperationError(string title, Exception error)

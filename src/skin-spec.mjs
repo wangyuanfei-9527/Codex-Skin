@@ -1,3 +1,5 @@
+import { text, validateAssetPrompt } from './spec-validation.mjs';
+
 const COLOR = /^#[0-9a-fA-F]{6}$/;
 const PALETTE_KEYS = ['background', 'surface', 'surfaceAlt', 'text', 'mutedText', 'accent', 'accentAlt', 'border'];
 const POSITION = new Set(['center', 'top', 'bottom', 'left', 'right']);
@@ -16,14 +18,6 @@ function exactKeys(value, keys, label, errors) {
   for (const key of keys) if (!(key in value)) errors.push(`${label}.${key} is required`);
   for (const key of Object.keys(value)) if (!expected.has(key)) errors.push(`${label}.${key} is not allowed`);
   return true;
-}
-
-function text(value, max) {
-  return typeof value === 'string' && value.trim().length > 0 && value.length <= max;
-}
-
-function completeSentence(value) {
-  return typeof value === 'string' && /[.!?。！？]$/.test(value.trim());
 }
 
 export function validateSkinSpec(spec) {
@@ -77,14 +71,18 @@ export function validateSkinSpec(spec) {
     } else {
       for (const [index, value] of spec.assets.motifs.entries()) if (!text(value, 40)) errors.push(`spec.assets.motifs[${index}] must contain 1-40 characters`);
     }
-    if (!text(spec.assets.heroPrompt, 1050) || !completeSentence(spec.assets.heroPrompt)) errors.push('spec.assets.heroPrompt must be a complete sentence within 1050 characters');
-    if (!text(spec.assets.iconPrompt, 650) || !completeSentence(spec.assets.iconPrompt)) errors.push('spec.assets.iconPrompt must be a complete sentence within 650 characters');
+    validateAssetPrompt(spec.assets.heroPrompt, 1050, 'spec.assets.heroPrompt', errors);
+    validateAssetPrompt(spec.assets.iconPrompt, 650, 'spec.assets.iconPrompt', errors);
   }
   return errors;
 }
 
 export function assertSkinSpec(spec) {
   const errors = validateSkinSpec(spec);
-  if (errors.length) throw new Error(`Invalid skin specification:\n- ${errors.join('\n- ')}`);
+  if (errors.length) {
+    const error = new Error(`Invalid skin specification:\n- ${errors.join('\n- ')}`);
+    error.code = 'SKIN_SPEC_INVALID';
+    throw error;
+  }
   return spec;
 }

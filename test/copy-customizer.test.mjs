@@ -63,7 +63,7 @@ test('clones a validated skin with exact copy overrides and leaves the source un
   assert.equal(customized.manifest.theme.icons.sha256, sourceChecked.manifest.theme.icons.sha256);
   assert.ok(css.includes(`content: ${JSON.stringify(overrides.copy.heroTitle)}`));
   assert.ok(css.includes(`content: ${JSON.stringify(overrides.copy.heroSubtitle)}`));
-  for (const subtitle of overrides.copy.cardSubtitles) assert.ok(css.includes(`content: ${JSON.stringify(subtitle)}`));
+  assert.ok(css.includes('#codex-skin-studio-chrome .skin-action-card'));
   assert.equal(css.includes(sourceChecked.design.copy.heroTitle), false);
 });
 

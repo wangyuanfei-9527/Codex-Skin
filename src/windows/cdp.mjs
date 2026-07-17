@@ -96,7 +96,6 @@ export function buildInjectionExpression(payload) {
       document.querySelectorAll('.skin-window-topbar').forEach(node => node.classList.remove('skin-window-topbar'));
       document.querySelectorAll('.skin-rail-section-header').forEach(node => node.classList.remove('skin-rail-section-header'));
       document.querySelectorAll('.skin-rail-action').forEach(node => node.classList.remove('skin-rail-action'));
-      document.querySelectorAll('.skin-card-copy').forEach(node => node.remove());
       document.querySelectorAll('[data-skin-generated-aria-label]').forEach(node => {
         node.removeAttribute('aria-label');
         node.removeAttribute('data-skin-generated-aria-label');
@@ -129,6 +128,7 @@ export function buildInjectionExpression(payload) {
 
     let home = null;
     let resizeObserver = null;
+    let nativeSuggestionButtons = [];
     const refreshPageContext = () => {
       const nextShellMain = document.querySelector('main.main-surface');
       const nextShellSidebar = document.querySelector('aside.app-shell-left-panel');
@@ -159,10 +159,26 @@ export function buildInjectionExpression(payload) {
     const newTaskLabels = ['新建任务', 'New task'];
     const settingsReturnLabels = ['返回应用', 'Back to app'];
     const railActionLabels = ['创建文件或站点', '附加文件或连接应用', 'Create file or site', 'Attach files or connect apps'];
-    const applyCardCopy = (button, index) => {
-      const title = payload.cardTitles?.[index];
-      const subtitle = payload.cardSubtitles?.[index];
-      if (!title || !subtitle) return;
+    const labelIndex = (button) => {
+      const label = (button.textContent || '').replace(/\\s+/g, ' ').trim();
+      return suggestionLabels.findIndex(variants => variants.some(variant => label.includes(variant)));
+    };
+    const suggestionButtons = () => {
+      if (!home) return [];
+      const grouped = [...home.querySelectorAll('[class~="group/home-suggestions"] button')];
+      const matched = suggestionLabels
+        .map((_, index) => grouped.find(button => labelIndex(button) === index))
+        .filter(Boolean);
+      if (matched.length === 4) return matched;
+      if (grouped.length >= 2) return grouped.slice(0, 4);
+      const fallback = [];
+      for (const button of home.querySelectorAll('button')) {
+        const index = labelIndex(button);
+        if (index >= 0) fallback[index] = button;
+      }
+      return fallback.filter(Boolean);
+    };
+    const preserveNativeLabel = (button) => {
       if (!button.hasAttribute('aria-label')) {
         const nativeLabel = (button.textContent || '').replace(/\\s+/g, ' ').trim();
         if (nativeLabel) {
@@ -170,37 +186,19 @@ export function buildInjectionExpression(payload) {
           button.setAttribute('data-skin-generated-aria-label', 'true');
         }
       }
-      let copy = button.querySelector(':scope > .skin-card-copy');
-      if (!copy) {
-        copy = document.createElement('span');
-        copy.className = 'skin-card-copy';
-        copy.setAttribute('aria-hidden', 'true');
-        copy.append(document.createElement('b'), document.createElement('small'));
-        button.appendChild(copy);
-      }
-      copy.querySelector('b').textContent = title;
-      copy.querySelector('small').textContent = subtitle;
     };
     const markNativeControls = () => {
       if (!refreshPageContext()) return;
-      home?.querySelectorAll('[data-skin-suggestion-index]').forEach(node => node.removeAttribute('data-skin-suggestion-index'));
+      const nextSuggestionButtons = suggestionButtons();
+      document.querySelectorAll('[data-skin-suggestion-index]').forEach(node => {
+        if (!nextSuggestionButtons.includes(node)) node.removeAttribute('data-skin-suggestion-index');
+      });
+      nativeSuggestionButtons = nextSuggestionButtons;
+      nativeSuggestionButtons.forEach((button, index) => {
+        button.setAttribute('data-skin-suggestion-index', String(index));
+        preserveNativeLabel(button);
+      });
       if (home) {
-        const groupButtons = [...home.querySelectorAll('[class~="group/home-suggestions"] button')];
-        if (groupButtons.length >= 2 && groupButtons.length <= 4) {
-          groupButtons.forEach((button, index) => {
-            button.setAttribute('data-skin-suggestion-index', String(index));
-            applyCardCopy(button, index);
-          });
-        } else {
-          for (const button of home.querySelectorAll('button')) {
-            const label = (button.textContent || '').replace(/\\s+/g, ' ').trim();
-            const index = suggestionLabels.findIndex(variants => variants.some(variant => label.includes(variant)));
-            if (index >= 0) {
-              button.setAttribute('data-skin-suggestion-index', String(index));
-              applyCardCopy(button, index);
-            }
-          }
-        }
         home.querySelectorAll('.skin-project-toolbar').forEach(node => node.classList.remove('skin-project-toolbar'));
         const projectSelector = home.querySelector('[class~="group/project-selector"]');
         const fadeMask = projectSelector?.closest('.horizontal-scroll-fade-mask, [class*="horizontal-scroll-fade-mask"]');
@@ -291,13 +289,43 @@ export function buildInjectionExpression(payload) {
     if (!chrome) {
       chrome = document.createElement('div');
       chrome.id = 'codex-skin-studio-chrome';
-      chrome.setAttribute('aria-hidden', 'true');
-      chrome.innerHTML = '<div class="skin-brand"><span class="skin-brand-mark">✦</span><span><b></b><small></small></span></div><div class="skin-signature"></div><div class="skin-sparkles"><i></i><i></i><i></i><i></i></div><div class="skin-polaroid"></div>';
       document.body.appendChild(chrome);
     }
+    chrome.removeAttribute('aria-hidden');
+    chrome.innerHTML = '<div class="skin-brand" aria-hidden="true"><span class="skin-brand-mark">✦</span><span><b></b><small></small></span></div><div class="skin-signature" aria-hidden="true"></div><div class="skin-sparkles" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="skin-polaroid" aria-hidden="true"></div><div class="skin-action-deck"><button class="skin-action-card" type="button" data-skin-action-index="0"><b></b><small></small></button><button class="skin-action-card" type="button" data-skin-action-index="1"><b></b><small></small></button><button class="skin-action-card" type="button" data-skin-action-index="2"><b></b><small></small></button><button class="skin-action-card" type="button" data-skin-action-index="3"><b></b><small></small></button></div>';
     chrome.querySelector('.skin-brand b').textContent = payload.name;
     chrome.querySelector('.skin-brand small').textContent = payload.summary;
     chrome.querySelector('.skin-signature').textContent = payload.signature || '';
+    const writeComposer = (value) => {
+      const editor = home?.querySelector('.ProseMirror[contenteditable="true"]');
+      if (!editor) return false;
+      editor.focus();
+      const existing = (editor.textContent || '').trim();
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(editor);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      const text = existing ? '\\n' + value : value;
+      const transfer = new DataTransfer();
+      transfer.setData('text/plain', text);
+      editor.dispatchEvent(new ClipboardEvent('paste', { clipboardData: transfer, bubbles: true, cancelable: true }));
+      editor.focus();
+      return (editor.textContent || '').includes(value);
+    };
+    chrome.querySelectorAll('.skin-action-card').forEach((button, index) => {
+      const title = payload.cardTitles?.[index] || '';
+      const subtitle = payload.cardSubtitles?.[index] || '';
+      button.querySelector('b').textContent = title;
+      button.querySelector('small').textContent = subtitle;
+      button.setAttribute('aria-label', subtitle ? title + '：' + subtitle : title);
+      button.onclick = () => {
+        const nativeButton = nativeSuggestionButtons[index];
+        if (nativeButton?.isConnected) nativeButton.click();
+        else writeComposer(subtitle ? title + '：' + subtitle : title);
+      };
+    });
     chrome.classList.toggle('skin-home-shell', Boolean(home));
     const syncChromeGeometry = () => {
       const shellBox = shellMain.getBoundingClientRect();

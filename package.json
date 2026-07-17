@@ -8,7 +8,7 @@
     "codex-skin": "./bin/codex-skin.mjs"
   },
   "scripts": {
-    "check": "node --check bin/codex-skin.mjs && node --check src/codex-runtime.mjs && node --check src/reference-analysis.mjs && node --check src/skin-spec.mjs && node --check src/theme-assets.mjs && node --check src/theme-compiler.mjs && node --check src/copy-customizer.mjs && node --check src/pet-replacer.mjs && node --check src/bundle-validator.mjs && node --check src/store.mjs && node --check src/windows/cdp.mjs && node --check src/windows/injector-daemon.mjs && node --check src/windows/restart-helper.mjs && node --check plugin/codex-skin-studio/scripts/codex-skin.mjs",
+    "check": "node --check bin/codex-skin.mjs && node --check src/codex-runtime.mjs && node --check src/reference-analysis.mjs && node --check src/spec-validation.mjs && node --check src/skin-spec.mjs && node --check src/theme-assets.mjs && node --check src/theme-compiler.mjs && node --check src/copy-customizer.mjs && node --check src/pet-replacer.mjs && node --check src/bundle-validator.mjs && node --check src/store.mjs && node --check src/windows/cdp.mjs && node --check src/windows/injector-daemon.mjs && node --check src/windows/restart-helper.mjs && node --check plugin/codex-skin-studio/scripts/codex-skin.mjs",
     "test": "node --test \"test/*.test.mjs\"",
     "verify": "npm run check && npm test"
   },

@@ -108,13 +108,15 @@ test('compiles a skin-only bundle with native Codex layout selectors and no pet'
   assert.match(css, /aside\.app-shell-left-panel/);
   assert.match(css, /main\.main-surface/);
   assert.match(css, /codex-skin-home/);
-  assert.match(css, /data-skin-suggestion-index/);
-  assert.match(css, /skin-card-copy/);
+  assert.match(css, /\.codex-skin-home::before/);
+  assert.match(css, /background-size: cover/);
+  assert.match(css, /skin-action-deck/);
+  assert.match(css, /skin-action-card/);
   assert.match(css, /skin-project-toolbar/);
   assert.match(css, /skin-thread-header-layout/);
   assert.match(css, /codex-skin-composer-top/);
   assert.match(css, /padding-right: 72px/);
-  assert.match(css, /background-size: 100% 100%, auto 118%/);
+  assert.doesNotMatch(css, /background-size: 100% 100%, auto 118%/);
   assert.match(css, /CODEX_SKIN_ICONS_DATA_URL/);
   assert.match(css, /--color-token-dropdown-background:/);
   assert.match(css, /--color-token-foreground:/);
