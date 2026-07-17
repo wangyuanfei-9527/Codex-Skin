@@ -60,13 +60,13 @@ Every successful generation is added to a local theme library. Revisit and switc
 
 ### Quick start
 
-1. Download `CodexSkinStudio-v0.7.7-Windows-x64.exe` from [Releases](https://github.com/wangyuanfei-9527/Codex-Skin/releases/tag/v0.7.7).
+1. Download `CodexSkinStudio-v0.7.8-Windows-x64.exe` from [Releases](https://github.com/wangyuanfei-9527/Codex-Skin/releases/tag/v0.7.8).
 2. Double-click the EXE. There is nothing to install and no separate API key to paste in.
 3. Add your reference images and write the creative direction.
 4. Choose **Generate preview only** to review the result, or **Generate skin and apply** for the complete flow.
 5. Use **Restore original Codex** whenever you want to switch back. Your theme library stays intact.
 
-**[Download Codex Skin Studio v0.7.7](https://github.com/wangyuanfei-9527/Codex-Skin/releases/tag/v0.7.7)**
+**[Download Codex Skin Studio v0.7.8](https://github.com/wangyuanfei-9527/Codex-Skin/releases/tag/v0.7.8)**
 
 ## Local-first, with a clear data boundary
 
@@ -82,7 +82,7 @@ The app launches the `codex` command already installed and authenticated on your
 
 The validated theme surface includes the sidebar, navigation, project and task rows, home hero, feature cards, composer, scroll treatment, selections, code blocks, conversations, review, diff, settings, in-app menus, overlays, dialogs, and editor design tokens.
 
-Native Windows title and menu chrome, unknown controls, your real signed-in name, core navigation labels, user tasks, plugins, credentials, and pet windows stay untouched. v0.7.7 focuses on doing the independent skin workflow well; pet creation remains separate rather than shipping a generic placeholder.
+Native Windows title and menu chrome, unknown controls, your real signed-in name, core navigation labels, user tasks, plugins, credentials, and pet windows stay untouched. v0.7.8 focuses on doing the independent skin workflow well; pet creation remains separate rather than shipping a generic placeholder.
 
 <details>
 <summary><strong>Command-line workflow</strong></summary>
@@ -91,7 +91,7 @@ The desktop app is the recommended interface. The repository also exposes the sa
 
 ```powershell
 node .\bin\codex-skin.mjs doctor
-node .\bin\codex-skin.mjs generate-skin --image C:\path\one.png --requirements "Create a theme that preserves the character's signature traits" --output C:\path\bundle
+node .\bin\codex-skin.mjs generate-skin --image C:\path\one.png --requirements "Create a theme that preserves the character's signature traits" --color-mode light --output C:\path\bundle
 node .\bin\codex-skin.mjs validate C:\path\bundle
 node .\bin\codex-skin.mjs apply-skin C:\path\bundle --restart
 node .\bin\codex-skin.mjs restore-skin --restart
@@ -116,14 +116,14 @@ The single-file app is written to `dist\CodexSkinStudio.exe`.
 </details>
 
 <details>
-<summary><strong>v0.7.7 verification</strong></summary>
+<summary><strong>v0.7.8 verification</strong></summary>
 
-This release passes 30 automated checks and was visually audited on the real home, conversation, review, profile-menu, and all 19 settings surfaces.
+This release passes 31 automated checks and includes a visual audit of the studio's light mode, dark mode, custom title bar, combo boxes, and scroll treatment.
 
 Portable EXE SHA-256:
 
 ```text
-1B5F0E0F4D7DD948953084827F20951F16F60C3625DD1DADD33BA369220BC29F
+1A91B4849CC484A91914BE87E10F7CCA52A35D4752B783D66EE57A084B0486DA
 ```
 
 </details>

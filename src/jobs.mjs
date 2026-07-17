@@ -5,11 +5,14 @@ import { paths, REFERENCE_IMAGE_MAX_BYTES, REFERENCE_IMAGES_TOTAL_MAX_BYTES } fr
 import { copyFileAtomic, ensureDir, writeJsonAtomic } from './io.mjs';
 
 const INPUT_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp']);
+const COLOR_MODES = new Set(['auto', 'light', 'dark']);
 
-export async function createJob(imagePaths, requirements) {
+export async function createJob(imagePaths, requirements, colorMode = 'auto') {
   if (!Array.isArray(imagePaths) || imagePaths.length === 0) throw new Error('At least one --image is required');
   if (imagePaths.length > 32) throw new Error('At most 32 images are supported');
   if (typeof requirements !== 'string' || !requirements.trim()) throw new Error('--requirements must not be empty');
+  const normalizedColorMode = typeof colorMode === 'string' ? colorMode.trim().toLowerCase() : '';
+  if (!COLOR_MODES.has(normalizedColorMode)) throw new Error('Color mode must be auto, light, or dark');
 
   const id = `${new Date().toISOString().replace(/[:.]/g, '-')}-${crypto.randomUUID().slice(0, 8)}`;
   const directory = path.join(paths().jobs, id);
@@ -40,6 +43,13 @@ export async function createJob(imagePaths, requirements) {
     id,
     images,
     requirements: requirements.trim(),
+    colorMode: normalizedColorMode,
   });
-  return { id, directory, images: images.map((item) => path.join(directory, item)), requirements: requirements.trim() };
+  return {
+    id,
+    directory,
+    images: images.map((item) => path.join(directory, item)),
+    requirements: requirements.trim(),
+    colorMode: normalizedColorMode,
+  };
 }

@@ -19,8 +19,8 @@ const HELP = `Codex Skin Studio
 
 Usage:
   codex-skin doctor
-  codex-skin generate --image <file> [--image <file>...] --requirements <text> [--pet-spritesheet <file>] [--output <dir>]
-  codex-skin generate-skin --image <file> [--image <file>...] --requirements <text> [--output <dir>] [--progress-file <file>]
+  codex-skin generate --image <file> [--image <file>...] --requirements <text> [--color-mode auto|light|dark] [--pet-spritesheet <file>] [--output <dir>]
+  codex-skin generate-skin --image <file> [--image <file>...] --requirements <text> [--color-mode auto|light|dark] [--output <dir>] [--progress-file <file>]
   codex-skin compile --spec <file> --image <file> [--image <file>...] [--pet-spritesheet <file>] [--output <dir>]
   codex-skin compile-skin --spec <file> --image <file> [--image <file>...] [--background-image <file>] [--icons <file>] [--output <dir>]
   codex-skin validate <bundle-dir>
@@ -86,7 +86,7 @@ async function doctor() {
 }
 
 async function generate(args) {
-  const job = await createJob(args.all('--image'), await requirements(args));
+  const job = await createJob(args.all('--image'), await requirements(args), args.one('--color-mode') || 'auto');
   const analyzed = await analyzeWithLocalCodex(job);
   const bundle = await compileBundle({
     spec: analyzed.spec,
@@ -98,7 +98,7 @@ async function generate(args) {
 }
 
 async function generateSkin(args) {
-  const job = await createJob(args.all('--image'), await requirements(args));
+  const job = await createJob(args.all('--image'), await requirements(args), args.one('--color-mode') || 'auto');
   const progressFile = args.one('--progress-file');
   const report = async (stage, detail, artifacts = {}) => {
     if (!progressFile) return;

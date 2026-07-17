@@ -9,6 +9,30 @@ import { runProcess } from './process.mjs';
 
 const projectRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const forbiddenEvent = /(mcp[_ -]?tool|web[_ -]?search|browser|http[_ -]?request|command[_ -]?execution|exec[_ -]?command|shell)/i;
+const colorModeInstructions = {
+  auto: 'Color mode: AUTO. Choose a light or dark foundation from the verified references and user brief; do not assume a coding workspace must be dark.',
+  light: 'Mandatory color mode: LIGHT. Use high-luminance background, surface, and surfaceAlt colors with dark readable text. Keep hero art high-key and airy; bright accents on a navy or black foundation do not satisfy this mode.',
+  dark: 'Mandatory color mode: DARK. Use deep background, surface, and surfaceAlt colors with light readable text. Keep hero art low-luminance and restrained; pale base surfaces do not satisfy this mode.',
+};
+
+function relativeLuminance(hex) {
+  const value = hex.replace('#', '');
+  const channels = [0, 2, 4].map((offset) => Number.parseInt(value.slice(offset, offset + 2), 16) / 255)
+    .map((channel) => channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4);
+  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+}
+
+function assertPaletteColorMode(palette, colorMode) {
+  if (!palette || colorMode === 'auto' || !colorMode) return;
+  const baseLuminance = [palette.background, palette.surface, palette.surfaceAlt].map(relativeLuminance);
+  const textLuminance = relativeLuminance(palette.text);
+  const matches = colorMode === 'light'
+    ? baseLuminance.every((value) => value > 0.45) && textLuminance < 0.25
+    : baseLuminance.every((value) => value < 0.25) && textLuminance > 0.45;
+  if (!matches) {
+    throw new Error(`Generated palette does not satisfy ${colorMode} color mode: background surfaces and primary text have the wrong luminance relationship`);
+  }
+}
 
 async function firstExisting(lines) {
   for (const line of lines) {
@@ -99,7 +123,7 @@ function nestedErrorMessage(value) {
     || nestedErrorMessage(value.message);
 }
 
-function analysisPrompt(requirements, imageCount, { includePet = true } = {}) {
+function analysisPrompt(requirements, imageCount, { includePet = true, colorMode = 'auto' } = {}) {
   const lines = [
     'You are the private visual design stage of Codex Skin Studio.',
     `Analyze the ${imageCount} attached local reference image(s) and the user brief below.`,
@@ -112,6 +136,7 @@ function analysisPrompt(requirements, imageCount, { includePet = true } = {}) {
     'Write a coherent copy set for the hero subtitle, four short suggestion-card subtitles, composer placeholder, and a restrained theme signature. Match the user language.',
     'Create an asset plan: name the intended subject and 3-4 recurring motifs, then write a production-ready wide hero artwork prompt and a matching 2x2 icon-atlas prompt. Both prompts must request no text, no logos, no watermarks, no borders, and no fake UI.',
     'Use accessible, coherent #RRGGBB colors with readable text and distinct interactive accents.',
+    colorModeInstructions[colorMode] || colorModeInstructions.auto,
     'Do not identify real people. If the user explicitly names a fictional character or franchise theme, preserve the character identity and signature visual traits while creating a new composition; otherwise infer an original subject from the references.',
     '',
     'User brief:',
@@ -136,13 +161,14 @@ function referenceExtractionPrompt(imageCount) {
   ].join('\n');
 }
 
-function skinPlanningPrompt(requirements, referenceAnalysis) {
+function skinPlanningPrompt(requirements, referenceAnalysis, colorMode = 'auto') {
   return [
     'You are the theme-planning and asset-prompt stage of Codex Skin Studio.',
     'Use the verified reference extraction and user brief below. Do not re-analyze image pixels and do not generate images yet.',
     'Return only a JSON object that conforms exactly to the supplied output schema.',
     'Do not browse, call tools, run commands, read files, or include executable code.',
     'Design a complete Codex skin system: accessible palette, banner/fullscreen layout, focalX/focalY crop coordinates, interface copy including heroTitle, projectLabel, four concise cardTitles/cardSubtitles, and a short profileBadge, subject treatment, recurring motifs, a hero-art prompt, and a matching 2x2 icon-atlas prompt.',
+    colorModeInstructions[colorMode] || colorModeInstructions.auto,
     'For banner layouts, choose focalY near the face or signature feature and keep it comfortably away from the top edge; the final banner is much wider than the generated source. For fullscreen layouts, choose the natural scene focus.',
     'The hero prompt must request a clean 16:10 application background with deliberate copy-safe space, no text, no logo, no watermark, no border, and no fake UI controls.',
     'The icon prompt must request exactly four coordinated edge-to-edge quadrants for code exploration, feature building, review, and repair; no text, no border, no watermark.',
@@ -204,7 +230,7 @@ async function analyzeWithSchema(job, { schemaFile, resultFile, assertSpec, incl
   try {
     result = await runProcess(command.executable, [...command.prefix, ...args], {
       cwd: job.directory,
-      stdin: prompt || analysisPrompt(job.requirements, job.images.length, { includePet }),
+      stdin: prompt || analysisPrompt(job.requirements, job.images.length, { includePet, colorMode: job.colorMode }),
       signal: controller.signal,
       onStdout: inspectChunk,
     });
@@ -226,12 +252,14 @@ async function analyzeWithSchema(job, { schemaFile, resultFile, assertSpec, incl
 }
 
 export async function analyzeWithLocalCodex(job) {
-  return analyzeWithSchema(job, {
+  const result = await analyzeWithSchema(job, {
     schemaFile: 'design-spec.schema.json',
     resultFile: 'design-spec.json',
     assertSpec: assertDesignSpec,
     includePet: true,
   });
+  assertPaletteColorMode(result.spec.palette, job.colorMode);
+  return result;
 }
 
 export async function extractReferenceAnalysisWithLocalCodex(job) {
@@ -245,13 +273,15 @@ export async function extractReferenceAnalysisWithLocalCodex(job) {
 }
 
 export async function planSkinWithLocalCodex(job, referenceAnalysis) {
-  return analyzeWithSchema(job, {
+  const result = await analyzeWithSchema(job, {
     schemaFile: 'skin-spec.schema.json',
     resultFile: 'skin-spec.json',
     assertSpec: assertSkinSpec,
-    prompt: skinPlanningPrompt(job.requirements, referenceAnalysis),
+    prompt: skinPlanningPrompt(job.requirements, referenceAnalysis, job.colorMode),
     attachImages: false,
   });
+  assertPaletteColorMode(result.spec.palette, job.colorMode);
+  return result;
 }
 
 export async function analyzeSkinWithLocalCodex(job) {
