@@ -71,11 +71,15 @@ export function buildInjectionExpression(payload) {
     previousState?.observer?.disconnect();
     previousState?.resizeObserver?.disconnect();
     if (previousState?.timer) clearTimeout(previousState.timer);
+    if (previousState?.retryTimer) clearTimeout(previousState.retryTimer);
     const payload = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob('${encoded}'), character => character.charCodeAt(0))));
     const root = document.documentElement;
-    const shellMain = document.querySelector('main.main-surface');
-    const shellSidebar = document.querySelector('aside.app-shell-left-panel');
+    let shellMain = document.querySelector('main.main-surface');
+    let shellSidebar = document.querySelector('aside.app-shell-left-panel');
+    let diffRetryTimer = null;
+    let diffRetryAttempts = 0;
     const clear = () => {
+      if (diffRetryTimer) clearTimeout(diffRetryTimer);
       root?.classList.remove('codex-skin-studio-active');
       root?.classList.remove('skin-layout-banner', 'skin-layout-fullscreen');
       shellMain?.classList.remove('skin-settings-shell');
@@ -126,6 +130,15 @@ export function buildInjectionExpression(payload) {
     let home = null;
     let resizeObserver = null;
     const refreshPageContext = () => {
+      const nextShellMain = document.querySelector('main.main-surface');
+      const nextShellSidebar = document.querySelector('aside.app-shell-left-panel');
+      if (!nextShellMain || !nextShellSidebar) return false;
+      if (nextShellMain !== shellMain) {
+        resizeObserver?.unobserve(shellMain);
+        shellMain = nextShellMain;
+        resizeObserver?.observe(shellMain);
+      }
+      shellSidebar = nextShellSidebar;
       home = document.querySelector('[role="main"]:has([data-testid="home-icon"])');
       document.querySelectorAll('[role="main"].codex-skin-home').forEach(node => {
         if (node !== home) node.classList.remove('codex-skin-home');
@@ -134,6 +147,7 @@ export function buildInjectionExpression(payload) {
       shellMain.classList.toggle('skin-home-shell', Boolean(home));
       document.getElementById('codex-skin-studio-chrome')?.classList.toggle('skin-home-shell', Boolean(home));
       if (home && resizeObserver) resizeObserver.observe(home);
+      return true;
     };
 
     const suggestionLabels = [
@@ -168,7 +182,7 @@ export function buildInjectionExpression(payload) {
       copy.querySelector('small').textContent = subtitle;
     };
     const markNativeControls = () => {
-      refreshPageContext();
+      if (!refreshPageContext()) return;
       home?.querySelectorAll('[data-skin-suggestion-index]').forEach(node => node.removeAttribute('data-skin-suggestion-index'));
       if (home) {
         const groupButtons = [...home.querySelectorAll('[class~="group/home-suggestions"] button')];
@@ -204,9 +218,13 @@ export function buildInjectionExpression(payload) {
         ? shellMain.querySelector('.scrollbar-stable.flex-1.overflow-y-auto.p-panel')
         : null;
       shellMain.classList.toggle('skin-settings-shell', Boolean(settingsContent));
+      let waitingForDiffShadow = false;
       for (const diffContainer of document.querySelectorAll('diffs-container')) {
         const shadowRoot = diffContainer.shadowRoot;
-        if (!shadowRoot) continue;
+        if (!shadowRoot) {
+          waitingForDiffShadow = true;
+          continue;
+        }
         let reviewStyle = shadowRoot.getElementById('codex-skin-review-diff-shadow');
         if (!payload.reviewDiffCss) {
           reviewStyle?.remove();
@@ -218,6 +236,15 @@ export function buildInjectionExpression(payload) {
           shadowRoot.appendChild(reviewStyle);
         }
         reviewStyle.textContent = payload.reviewDiffCss;
+      }
+      if (waitingForDiffShadow && !diffRetryTimer && diffRetryAttempts < 8) {
+        diffRetryAttempts += 1;
+        diffRetryTimer = setTimeout(() => {
+          diffRetryTimer = null;
+          markNativeControls();
+        }, 60);
+      } else if (!waitingForDiffShadow) {
+        diffRetryAttempts = 0;
       }
       document.querySelector('[class~="group/application-menu-top-bar"]')?.classList.add('skin-window-topbar');
       for (const button of document.querySelectorAll('button[aria-label]')) {
@@ -245,6 +272,7 @@ export function buildInjectionExpression(payload) {
     markNativeControls();
     const scheduler = { timer: null };
     const observer = new MutationObserver(() => {
+      diffRetryAttempts = 0;
       if (scheduler.timer) clearTimeout(scheduler.timer);
       scheduler.timer = setTimeout(() => {
         markNativeControls();
@@ -252,7 +280,11 @@ export function buildInjectionExpression(payload) {
       }, 120);
     });
     observer.observe(document.documentElement, { childList: true, subtree: true });
-    const state = { observer, get timer() { return scheduler.timer; } };
+    const state = {
+      observer,
+      get timer() { return scheduler.timer; },
+      get retryTimer() { return diffRetryTimer; },
+    };
     window[stateKey] = state;
 
     let chrome = document.getElementById('codex-skin-studio-chrome');

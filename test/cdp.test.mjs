@@ -32,7 +32,11 @@ test('marks the real suggestion cards and keeps their labels whitespace tolerant
   assert.match(expression, /skin-rail-action/);
   assert.match(expression, /codex-skin-review-diff-shadow/);
   assert.match(expression, /payload\.reviewDiffCss/);
+  assert.match(expression, /waitingForDiffShadow/);
+  assert.match(expression, /diffRetryAttempts < 8/);
   assert.match(expression, /refreshPageContext/);
+  assert.match(expression, /nextShellMain/);
+  assert.match(expression, /resizeObserver\?\.unobserve\(shellMain\)/);
   assert.match(expression, /replace\(\/\\s\+\/g/);
   assert.match(expression, /MutationObserver/);
   assert.match(expression, /ResizeObserver/);

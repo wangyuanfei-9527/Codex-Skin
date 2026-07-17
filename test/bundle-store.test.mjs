@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { validateBundle } from '../src/bundle-validator.mjs';
-import { codexReviewDiffCss, codexRuntimePatchCss, compileBundle } from '../src/theme-compiler.mjs';
+import { codexNativeTokenCss, codexReviewDiffCss, codexRuntimePatchCss, compileBundle } from '../src/theme-compiler.mjs';
 import { replaceBundlePetSpritesheet } from '../src/pet-replacer.mjs';
 import { applyBundle, restoreOriginal, restoreSkin } from '../src/store.mjs';
 import { sampleSpec, writePng } from './helpers.mjs';
@@ -25,10 +25,20 @@ async function fixture() {
 }
 
 test('runtime patch upgrades historical themes without regeneration', () => {
+  const nativeCss = codexNativeTokenCss(sampleSpec().palette);
+  assert.match(nativeCss, /--color-background-control:/);
+  assert.match(nativeCss, /--color-token-menu-background:/);
+  assert.match(nativeCss, /--vscode-editor-background:/);
+  assert.match(nativeCss, /--vscode-editorSuggestWidget-background:/);
+  assert.match(nativeCss, /--vscode-multiDiffEditor-background:/);
+  assert.match(nativeCss, /!important/);
   const css = codexRuntimePatchCss(sampleSpec());
   assert.match(css, /skin-thread-header-layout/);
   assert.match(css, /skin-thread-actions/);
   assert.match(css, /:root\.codex-skin-studio-active button\[class~="bg-token-bg-fog"\]/);
+  assert.match(css, /\*:not\(\[style\*="color:"\]\)/);
+  assert.match(css, /button\[class~="bg-token-foreground"\]/);
+  assert.match(css, /\[class~="bg-token-foreground\/10"\]/);
   assert.match(css, /skin-thread-location-group/);
   assert.match(css, /main\.skin-settings-shell \[class~="rounded-2xl"\]\[class~="border-token-border"\]/);
   assert.match(css, /button\[role="switch"\]/);

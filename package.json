@@ -1,6 +1,6 @@
 {
   "name": "codex-skin-studio",
-  "version": "0.7.6",
+  "version": "0.7.7",
   "private": true,
   "type": "module",
   "description": "Local-first Codex skin generator using the user's installed Codex CLI.",

@@ -35,36 +35,176 @@ function cssContent(value) {
 
 export function codexNativeTokenCss(palette) {
   const p = palette;
+  const onAccent = colorScheme(p.accent) === 'light' ? p.background : p.text;
   return `:root.codex-skin-studio-active {
-  --color-token-foreground: ${p.text};
-  --color-token-description-foreground: ${p.mutedText};
-  --color-token-disabled-foreground: ${hexRgba(p.mutedText, 0.56)};
-  --color-token-text-primary: ${p.text};
-  --color-token-text-secondary: ${p.mutedText};
-  --color-token-text-tertiary: ${hexRgba(p.text, 0.76)};
-  --color-token-button-tertiary-foreground: ${hexRgba(p.text, 0.90)};
-  --color-token-dropdown-background: ${p.surface};
-  --color-token-dropdown-foreground: ${p.text};
-  --color-token-border: ${hexRgba(p.border, 0.74)};
-  --color-token-border-default: ${hexRgba(p.border, 0.82)};
-  --color-token-border-heavy: ${p.border};
-  --color-token-border-light: ${hexRgba(p.border, 0.48)};
-  --color-token-menu-border: ${hexRgba(p.border, 0.68)};
-  --color-token-main-surface-primary: ${p.surface};
-  --color-token-bg-primary: ${p.background};
-  --color-token-bg-secondary: ${p.surface};
-  --color-token-bg-tertiary: ${p.surfaceAlt};
-  --color-token-bg-fog: ${hexRgba(p.surfaceAlt, 0.88)};
-  --color-token-editor-background: ${p.background};
-  --color-token-editor-foreground: ${p.text};
-  --color-token-editor-widget-background: ${p.surface};
-  --color-token-input-background: ${p.surface};
-  --color-token-input-foreground: ${p.text};
-  --color-token-input-placeholder-foreground: ${p.mutedText};
-  --color-token-input-border: ${hexRgba(p.border, 0.72)};
-  --color-token-list-hover-background: ${hexRgba(p.accent, 0.14)};
-  --color-token-list-active-selection-background: ${hexRgba(p.accent, 0.22)};
-  --color-token-side-bar-background: ${p.surface};
+  --codex-base-accent: ${p.accent} !important;
+  --codex-base-ink: ${p.text} !important;
+  --codex-base-surface: ${p.surface} !important;
+  --color-accent-blue: ${p.accent} !important;
+  --color-accent-purple: ${p.accentAlt} !important;
+  --color-background-accent: ${hexRgba(p.accent, 0.16)} !important;
+  --color-background-accent-active: ${hexRgba(p.accent, 0.24)} !important;
+  --color-background-accent-hover: ${hexRgba(p.accent, 0.20)} !important;
+  --color-background-button-primary: ${p.accent} !important;
+  --color-background-button-primary-active: ${hexRgba(p.accent, 0.74)} !important;
+  --color-background-button-primary-hover: ${hexRgba(p.accent, 0.86)} !important;
+  --color-background-button-primary-inactive: ${hexRgba(p.accent, 0.42)} !important;
+  --color-background-button-secondary: ${hexRgba(p.text, 0.07)} !important;
+  --color-background-button-secondary-active: ${hexRgba(p.text, 0.13)} !important;
+  --color-background-button-secondary-hover: ${hexRgba(p.text, 0.10)} !important;
+  --color-background-button-secondary-inactive: ${hexRgba(p.text, 0.04)} !important;
+  --color-background-button-tertiary: transparent !important;
+  --color-background-button-tertiary-active: ${hexRgba(p.text, 0.15)} !important;
+  --color-background-button-tertiary-hover: ${hexRgba(p.text, 0.10)} !important;
+  --color-background-control: ${hexRgba(p.surfaceAlt, 0.94)} !important;
+  --color-background-control-opaque: ${p.surfaceAlt} !important;
+  --color-background-editor-opaque: ${p.surface} !important;
+  --color-background-elevated-primary: ${hexRgba(p.surfaceAlt, 0.96)} !important;
+  --color-background-elevated-primary-opaque: ${p.surfaceAlt} !important;
+  --color-background-elevated-secondary: ${hexRgba(p.surfaceAlt, 0.94)} !important;
+  --color-background-elevated-secondary-opaque: ${p.surfaceAlt} !important;
+  --color-background-panel: ${p.surface} !important;
+  --color-background-surface: ${p.surface} !important;
+  --color-background-surface-under: ${p.background} !important;
+  --color-background-status-error: rgba(224,46,42,0.16) !important;
+  --color-background-status-success: rgba(0,162,64,0.16) !important;
+  --color-background-status-warning: rgba(226,85,7,0.18) !important;
+  --color-border: ${hexRgba(p.border, 0.54)} !important;
+  --color-border-focus: ${p.accent} !important;
+  --color-border-heavy: ${hexRgba(p.border, 0.78)} !important;
+  --color-border-light: ${hexRgba(p.border, 0.34)} !important;
+  --color-icon-accent: ${p.accent} !important;
+  --color-icon-primary: ${p.text} !important;
+  --color-icon-secondary: ${hexRgba(p.mutedText, 0.88)} !important;
+  --color-icon-tertiary: ${hexRgba(p.mutedText, 0.64)} !important;
+  --color-simple-scrim: ${hexRgba(p.background, 0.48)} !important;
+  --color-text-accent: ${p.accent} !important;
+  --color-text-on-accent: ${onAccent} !important;
+  --color-text-button-primary: ${onAccent} !important;
+  --color-text-button-secondary: ${p.text} !important;
+  --color-text-button-tertiary: ${hexRgba(p.mutedText, 0.78)} !important;
+  --color-text-foreground: ${p.text} !important;
+  --color-text-foreground-secondary: ${hexRgba(p.mutedText, 0.90)} !important;
+  --color-text-foreground-tertiary: ${hexRgba(p.mutedText, 0.68)} !important;
+
+  --color-token-foreground: ${p.text} !important;
+  --color-token-description-foreground: ${p.mutedText} !important;
+  --color-token-disabled-foreground: ${hexRgba(p.mutedText, 0.56)} !important;
+  --color-token-text-primary: ${p.text} !important;
+  --color-token-text-secondary: ${p.mutedText} !important;
+  --color-token-text-tertiary: ${hexRgba(p.text, 0.76)} !important;
+  --color-token-button-background: ${p.accent} !important;
+  --color-token-button-foreground: ${onAccent} !important;
+  --color-token-button-border: ${hexRgba(p.border, 0.72)} !important;
+  --color-token-button-tertiary-foreground: ${hexRgba(p.text, 0.90)} !important;
+  --color-token-button-secondary-hover-background: ${hexRgba(p.text, 0.10)} !important;
+  --color-token-dropdown-background: ${p.surfaceAlt} !important;
+  --color-token-dropdown-foreground: ${p.text} !important;
+  --color-token-menu-background: ${hexRgba(p.surfaceAlt, 0.96)} !important;
+  --color-token-menu-border: ${hexRgba(p.border, 0.68)} !important;
+  --color-token-menubar-selection-background: ${hexRgba(p.surfaceAlt, 0.88)} !important;
+  --color-token-menubar-selection-foreground: ${p.text} !important;
+  --color-token-border: ${hexRgba(p.border, 0.74)} !important;
+  --color-token-border-default: ${hexRgba(p.border, 0.82)} !important;
+  --color-token-border-heavy: ${p.border} !important;
+  --color-token-border-light: ${hexRgba(p.border, 0.48)} !important;
+  --color-token-focus-border: ${p.accent} !important;
+  --color-token-main-surface-primary: ${p.surface} !important;
+  --color-token-bg-primary: ${p.background} !important;
+  --color-token-bg-secondary: ${p.surface} !important;
+  --color-token-bg-tertiary: ${p.surfaceAlt} !important;
+  --color-token-bg-fog: ${hexRgba(p.surfaceAlt, 0.88)} !important;
+  --color-token-editor-background: ${p.surface} !important;
+  --color-token-editor-foreground: ${p.text} !important;
+  --color-token-editor-widget-background: ${p.surfaceAlt} !important;
+  --color-token-editor-selection-background: ${hexRgba(p.accent, 0.24)} !important;
+  --color-token-editor-find-match-background: ${hexRgba(p.accentAlt, 0.28)} !important;
+  --color-token-editor-find-match-highlight-background: ${hexRgba(p.accentAlt, 0.16)} !important;
+  --color-token-input-background: ${p.surfaceAlt} !important;
+  --color-token-input-foreground: ${p.text} !important;
+  --color-token-input-placeholder-foreground: ${p.mutedText} !important;
+  --color-token-input-border: ${hexRgba(p.border, 0.72)} !important;
+  --color-token-checkbox-background: ${p.surfaceAlt} !important;
+  --color-token-checkbox-foreground: ${p.text} !important;
+  --color-token-checkbox-border: ${hexRgba(p.border, 0.72)} !important;
+  --color-token-radio-active-foreground: ${p.accent} !important;
+  --color-token-radio-inactive-border: ${hexRgba(p.border, 0.72)} !important;
+  --color-token-list-hover-background: ${hexRgba(p.accent, 0.14)} !important;
+  --color-token-list-active-selection-background: ${hexRgba(p.accent, 0.22)} !important;
+  --color-token-list-active-selection-foreground: ${p.text} !important;
+  --color-token-list-active-selection-icon-foreground: ${p.accent} !important;
+  --color-token-list-focus-outline: ${p.accent} !important;
+  --color-token-badge-background: ${hexRgba(p.accent, 0.16)} !important;
+  --color-token-badge-foreground: ${p.text} !important;
+  --color-token-toolbar-hover-background: ${hexRgba(p.text, 0.10)} !important;
+  --color-token-scrollbar-slider-background: ${hexRgba(p.mutedText, 0.20)} !important;
+  --color-token-scrollbar-slider-hover-background: ${hexRgba(p.mutedText, 0.30)} !important;
+  --color-token-scrollbar-slider-active-background: ${hexRgba(p.mutedText, 0.40)} !important;
+  --color-token-text-preformat-background: ${hexRgba(p.surfaceAlt, 0.92)} !important;
+  --color-token-text-preformat-foreground: ${p.text} !important;
+  --color-token-text-code-block-background: ${hexRgba(p.surface, 0.90)} !important;
+  --color-token-terminal-background: ${p.surface} !important;
+  --color-token-terminal-foreground: ${p.text} !important;
+  --color-token-terminal-border: ${hexRgba(p.border, 0.62)} !important;
+  --color-token-progress-bar-background: ${p.accent} !important;
+  --color-token-primary: ${p.accent} !important;
+  --color-token-link: ${p.accent} !important;
+  --color-token-text-link-foreground: ${p.accent} !important;
+  --color-token-text-link-active-foreground: ${p.accent} !important;
+  --color-token-side-bar-background: ${p.surface} !important;
+  --color-token-activity-bar-badge-background: ${p.accent} !important;
+  --color-token-activity-bar-badge-foreground: ${onAccent} !important;
+
+  --vscode-editor-background: ${p.surface} !important;
+  --vscode-editor-foreground: ${p.text} !important;
+  --vscode-editorPane-background: ${p.surface} !important;
+  --vscode-editorGutter-background: ${p.surface} !important;
+  --vscode-editorLineNumber-foreground: ${hexRgba(p.mutedText, 0.64)} !important;
+  --vscode-editorLineNumber-activeForeground: ${p.text} !important;
+  --vscode-editorActiveLineNumber-foreground: ${p.text} !important;
+  --vscode-editorCursor-foreground: ${p.accent} !important;
+  --vscode-editorWhitespace-foreground: ${hexRgba(p.mutedText, 0.42)} !important;
+  --vscode-editorCodeLens-foreground: ${hexRgba(p.mutedText, 0.68)} !important;
+  --vscode-editor-placeholder.foreground: ${hexRgba(p.mutedText, 0.68)} !important;
+  --vscode-editorGhostText-foreground: ${hexRgba(p.mutedText, 0.68)} !important;
+  --vscode-editor-selectionBackground: ${hexRgba(p.accent, 0.24)} !important;
+  --vscode-editor-inactiveSelectionBackground: ${hexRgba(p.accent, 0.16)} !important;
+  --vscode-editor-selectionHighlightBackground: ${hexRgba(p.accent, 0.14)} !important;
+  --vscode-editor-findMatchBackground: ${hexRgba(p.accentAlt, 0.28)} !important;
+  --vscode-editor-findMatchHighlightBackground: ${hexRgba(p.accentAlt, 0.16)} !important;
+  --vscode-editor-findRangeHighlightBackground: ${hexRgba(p.accentAlt, 0.12)} !important;
+  --vscode-editor-wordHighlightBackground: ${hexRgba(p.accent, 0.14)} !important;
+  --vscode-editor-wordHighlightStrongBackground: ${hexRgba(p.accent, 0.20)} !important;
+  --vscode-editor-wordHighlightTextBackground: ${hexRgba(p.accent, 0.12)} !important;
+  --vscode-editor-rangeHighlightBackground: ${hexRgba(p.accent, 0.12)} !important;
+  --vscode-editor-linkedEditingBackground: ${hexRgba(p.accent, 0.14)} !important;
+  --vscode-editor-lineHighlightBorder: ${hexRgba(p.border, 0.34)} !important;
+  --vscode-editorWidget-background: ${hexRgba(p.surfaceAlt, 0.98)} !important;
+  --vscode-editorWidget-foreground: ${p.text} !important;
+  --vscode-editorWidget-border: ${hexRgba(p.border, 0.68)} !important;
+  --vscode-editorHoverWidget-background: ${hexRgba(p.surfaceAlt, 0.98)} !important;
+  --vscode-editorHoverWidget-foreground: ${p.text} !important;
+  --vscode-editorHoverWidget-border: ${hexRgba(p.border, 0.68)} !important;
+  --vscode-editorHoverWidget-statusBarBackground: ${p.surface} !important;
+  --vscode-editorSuggestWidget-background: ${hexRgba(p.surfaceAlt, 0.98)} !important;
+  --vscode-editorSuggestWidget-foreground: ${p.text} !important;
+  --vscode-editorSuggestWidget-border: ${hexRgba(p.border, 0.68)} !important;
+  --vscode-editorSuggestWidget-selectedBackground: ${hexRgba(p.accent, 0.22)} !important;
+  --vscode-editorSuggestWidget-selectedForeground: ${p.text} !important;
+  --vscode-editorActionList-background: ${hexRgba(p.surfaceAlt, 0.98)} !important;
+  --vscode-editorActionList-foreground: ${p.text} !important;
+  --vscode-editorActionList-focusBackground: ${hexRgba(p.accent, 0.22)} !important;
+  --vscode-editorActionList-focusForeground: ${p.text} !important;
+  --vscode-editorStickyScroll-background: ${hexRgba(p.surfaceAlt, 0.98)} !important;
+  --vscode-editorStickyScrollHover-background: ${hexRgba(p.accent, 0.16)} !important;
+  --vscode-editorStickyScroll-shadow: ${hexRgba(p.background, 0.34)} !important;
+  --vscode-editorGroupHeader-tabsBackground: ${p.surfaceAlt} !important;
+  --vscode-editorGroupHeader-noTabsBackground: ${p.surfaceAlt} !important;
+  --vscode-editorGroupHeader-tabsBorder: ${hexRgba(p.border, 0.54)} !important;
+  --vscode-editorGroup-border: ${hexRgba(p.border, 0.54)} !important;
+  --vscode-multiDiffEditor-background: ${p.surface} !important;
+  --vscode-multiDiffEditor-headerBackground: ${hexRgba(p.surfaceAlt, 0.96)} !important;
+  --vscode-multiDiffEditor-border: ${hexRgba(p.border, 0.54)} !important;
 }`;
 }
 
@@ -175,10 +315,22 @@ export function codexRuntimePatchCss(design) {
   background-image: none !important;
   border-color: ${hexRgba(p.border, 0.68)} !important;
 }
-:root.codex-skin-studio-active button[class~="bg-token-bg-fog"] *,
-:root.codex-skin-studio-active .skin-thread-location-group button * {
+:root.codex-skin-studio-active button[class~="bg-token-bg-fog"] *:not([style*="color:"]),
+:root.codex-skin-studio-active .skin-thread-location-group button *:not([style*="color:"]) {
   color: inherit !important;
   opacity: 1 !important;
+}
+:root.codex-skin-studio-active button[class~="bg-token-foreground"] {
+  color: ${colorScheme(p.accent) === 'light' ? p.background : p.text} !important;
+  background-color: ${p.accent} !important;
+  border-color: ${hexRgba(p.accent, 0.72)} !important;
+}
+:root.codex-skin-studio-active button[class~="bg-token-foreground"]:enabled:hover {
+  background-color: color-mix(in srgb, ${p.accent} 84%, ${p.text}) !important;
+}
+:root.codex-skin-studio-active [class~="bg-token-foreground/10"] {
+  color: ${p.accent} !important;
+  background-color: ${hexRgba(p.accent, 0.14)} !important;
 }
 :root.codex-skin-studio-active main.skin-settings-shell {
   color: ${p.text} !important;
@@ -202,7 +354,7 @@ export function codexRuntimePatchCss(design) {
   background-image: none !important;
   border-color: ${hexRgba(p.border, 0.72)} !important;
 }
-:root.codex-skin-studio-active .skin-settings-shell button[class~="bg-token-bg-fog"] * {
+:root.codex-skin-studio-active .skin-settings-shell button[class~="bg-token-bg-fog"] *:not([style*="color:"]) {
   color: inherit !important;
   opacity: 1 !important;
 }
