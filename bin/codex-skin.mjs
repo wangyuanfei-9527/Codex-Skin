@@ -255,6 +255,10 @@ async function main() {
 }
 
 main().catch((error) => {
+  console.error(`codex-skin-error: ${JSON.stringify({
+    code: typeof error.code === 'string' ? error.code : 'UNEXPECTED_ERROR',
+    message: error.message,
+  })}`);
   console.error(`codex-skin: ${error.message}`);
   process.exitCode = 1;
 });

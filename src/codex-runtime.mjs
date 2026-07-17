@@ -49,6 +49,12 @@ function configuredCommand(configured) {
   return { executable: configured, prefix: [], displayPath: configured };
 }
 
+function runtimeError(code, message) {
+  const error = new Error(message);
+  error.code = code;
+  return error;
+}
+
 async function commandFromWindowsShim(shimPath) {
   const script = path.join(path.dirname(shimPath), 'node_modules', '@openai', 'codex', 'bin', 'codex.js');
   return await exists(script) ? { executable: process.execPath, prefix: [script], displayPath: shimPath } : null;
@@ -57,10 +63,10 @@ async function commandFromWindowsShim(shimPath) {
 export async function resolveCodexCommand() {
   if (process.env.CODEX_SKIN_CODEX) {
     const configured = path.resolve(process.env.CODEX_SKIN_CODEX);
-    if (!await exists(configured)) throw new Error(`CODEX_SKIN_CODEX does not exist: ${configured}`);
+    if (!await exists(configured)) throw runtimeError('CODEX_CLI_CONFIG_INVALID', `CODEX_SKIN_CODEX does not exist: ${configured}`);
     if (process.platform === 'win32' && ['.cmd', '.ps1'].includes(path.extname(configured).toLowerCase())) {
       const command = await commandFromWindowsShim(configured);
-      if (!command) throw new Error('CODEX_SKIN_CODEX points to a shim whose Codex Node entrypoint could not be found');
+      if (!command) throw runtimeError('CODEX_CLI_BROKEN', 'CODEX_SKIN_CODEX points to a shim whose Codex Node entrypoint could not be found');
       return command;
     }
     return configuredCommand(configured);
@@ -84,13 +90,13 @@ export async function resolveCodexCommand() {
     const executable = found.code === 0 ? await firstExisting(found.stdout.split(/\r?\n/)) : null;
     if (executable) return configuredCommand(executable);
   }
-  throw new Error('Could not find the local Codex CLI. Install Codex or set CODEX_SKIN_CODEX to its executable.');
+  throw runtimeError('CODEX_CLI_NOT_FOUND', 'Could not find the local Codex CLI. Install Codex or set CODEX_SKIN_CODEX to its executable.');
 }
 
 export async function inspectCodexRuntime() {
   const command = await resolveCodexCommand();
   const version = await runProcess(command.executable, [...command.prefix, '--version']);
-  if (version.code !== 0) throw new Error(`Local Codex failed to start: ${version.stderr.trim()}`);
+  if (version.code !== 0) throw runtimeError('CODEX_CLI_START_FAILED', `Local Codex failed to start: ${version.stderr.trim()}`);
   const login = await runProcess(command.executable, [...command.prefix, 'login', 'status']);
   return {
     executable: command.displayPath,

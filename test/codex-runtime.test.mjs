@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { analyzeSkinWithLocalCodex, analyzeWithLocalCodex, planSkinWithLocalCodex } from '../src/codex-runtime.mjs';
+import { analyzeSkinWithLocalCodex, analyzeWithLocalCodex, planSkinWithLocalCodex, resolveCodexCommand } from '../src/codex-runtime.mjs';
 import { createJob } from '../src/jobs.mjs';
 import { sampleSpec, writePng } from './helpers.mjs';
 
@@ -48,6 +48,18 @@ async function fakeCodex(root, event) {
 function clearEnvironment() {
   for (const name of ['CODEX_SKIN_CODEX', 'CODEX_SKIN_HOME', 'FAKE_CODEX_SPEC', 'FAKE_CODEX_REFERENCE', 'FAKE_CODEX_EVENT', 'FAKE_CODEX_ARGS', 'FAKE_CODEX_PROMPTS', 'FAKE_CODEX_EXIT']) delete process.env[name];
 }
+
+test('classifies an invalid configured Codex CLI path', { concurrency: false }, async () => {
+  process.env.CODEX_SKIN_CODEX = path.join(os.tmpdir(), `missing-codex-${Date.now()}.cmd`);
+  try {
+    await assert.rejects(resolveCodexCommand(), (error) => {
+      assert.equal(error.code, 'CODEX_CLI_CONFIG_INVALID');
+      return true;
+    });
+  } finally {
+    clearEnvironment();
+  }
+});
 
 test('runs the configured local Codex in the isolated job with privacy flags', { concurrency: false }, async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skin-codex-'));

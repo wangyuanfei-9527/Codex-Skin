@@ -35,7 +35,7 @@ The skin is not optimized for one glamorous screenshot. Verified settings, menus
 
 ## Your first theme takes three steps
 
-1. **Bring the inspiration.** Choose one or more character images, illustrations, palette references, or mood images.
+1. **Bring the inspiration.** Choose one character image, illustration, palette reference, or mood image.
 2. **Describe what must survive.** Call out the subject, mood, composition, copy direction, and the details that must remain recognizable.
 3. **Preview, then apply.** The studio creates the hero, icons, palette, and copy. Generate a preview for review, or apply the complete theme and restart Codex.
 
@@ -62,13 +62,13 @@ After previewing a theme, use **Customize copy** to edit the visible brand, hero
 
 ### Quick start
 
-1. Download `CodexSkinStudio-v0.7.9-Windows-x64.exe` from [Releases](https://github.com/wangyuanfei-9527/Codex-Skin/releases/tag/v0.7.9).
+1. Download `CodexSkinStudio-v0.7.10-Windows-x64.exe` from [Releases](https://github.com/wangyuanfei-9527/Codex-Skin/releases/tag/v0.7.10).
 2. Double-click the EXE. There is nothing to install and no separate API key to paste in.
 3. Add one reference image and write the creative direction. Selecting or dropping another image replaces the current one.
 4. Choose **Generate preview only** to review the result, or **Generate skin and apply** for the complete flow.
 5. Use **Restore original Codex** whenever you want to switch back. Your theme library stays intact.
 
-**[Download Codex Skin Studio v0.7.9](https://github.com/wangyuanfei-9527/Codex-Skin/releases/tag/v0.7.9)**
+**[Download Codex Skin Studio v0.7.10](https://github.com/wangyuanfei-9527/Codex-Skin/releases/tag/v0.7.10)**
 
 ## Local-first, with a clear data boundary
 
@@ -84,7 +84,7 @@ The app launches the `codex` command already installed and authenticated on your
 
 The validated theme surface includes the sidebar, navigation, project and task rows, home hero, feature cards, composer, scroll treatment, selections, code blocks, conversations, review, diff, settings, in-app menus, overlays, dialogs, and editor design tokens.
 
-Native Windows title and menu chrome, unknown controls, your real signed-in name, core navigation labels, user tasks, plugins, credentials, and pet windows stay untouched. v0.7.9 keeps the independent skin workflow focused and adds persistent copy customization; pet creation remains separate rather than shipping a generic placeholder.
+Native Windows title and menu chrome, unknown controls, your real signed-in name, core navigation labels, user tasks, plugins, credentials, and pet windows stay untouched. v0.7.10 adds theme-aware dialogs, actionable Codex CLI setup guidance, and a direct update entry while keeping pet creation separate.
 
 <details>
 <summary><strong>Command-line workflow</strong></summary>
@@ -118,9 +118,9 @@ The single-file app is written to `dist\CodexSkinStudio.exe`.
 </details>
 
 <details>
-<summary><strong>v0.7.9 verification</strong></summary>
+<summary><strong>v0.7.10 verification</strong></summary>
 
-This release passes 34 automated checks, builds the Windows x64 portable executable, and verifies the new multi-size application icon after extracting it from the compiled EXE.
+This release passes 38 automated checks and builds the Windows x64 portable executable successfully.
 
 The release page publishes the portable EXE SHA-256 in both the release notes and `SHA256SUMS.txt`.
 
@@ -128,7 +128,7 @@ The release page publishes the portable EXE SHA-256 in both the release notes an
 
 ## Troubleshooting
 
-- **Local Codex is not found:** run `codex --version` in PowerShell, confirm that you are signed in, then reopen the studio.
+- **Local Codex is not found:** use the in-app **Download Codex CLI** action, complete installation and sign-in, then reopen the studio.
 - **Generation stops before preview:** read the stage message. Missing, damaged, or invalid assets intentionally stop the workflow; an incomplete theme is never applied.
 - **An older theme is still visible:** open the Theme Library and apply the selected theme again so Codex restarts with the current bundle.
 - **A theme cannot be deleted:** it is currently in use. Apply another theme or restore the original appearance first.
