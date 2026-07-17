@@ -8,9 +8,9 @@
 
 <p align="center"><code>One portable EXE</code> · <code>No installer</code> · <code>Uses your local Codex</code> · <code>Preview first</code> · <code>Restore anytime</code></p>
 
-![Codex home screen with a generated Miku angel theme](./docs/images/codex-home.jpg)
+![Codex home screen with a generated light garden theme](./docs/images/codex-home.jpg)
 
-> This is the theme running in Codex, not a concept mockup. The hero, four icons, palette, and copy were generated from one reference direction. Change the references and brief, and the whole themed experience changes with them.
+> This is the light garden theme running in Codex, not a concept mockup. Its hero, four floral icons, warm palette, and copy were generated from one reference direction. Change the references and brief, and the whole themed experience changes with them.
 
 ## More than a background image
 
@@ -39,7 +39,7 @@ The skin is not optimized for one glamorous screenshot. Verified settings, menus
 2. **Describe what must survive.** Call out the subject, mood, composition, copy direction, and the details that must remain recognizable.
 3. **Preview, then apply.** The studio creates the hero, icons, palette, and copy. Generate a preview for review, or apply the complete theme and restart Codex.
 
-![Codex Skin Studio creation workflow and live theme preview](./docs/images/studio-create.jpg)
+![Codex Skin Studio light-mode creation workflow and live theme preview](./docs/images/studio-create.jpg)
 
 Generation is not a mystery button. The studio keeps your references, direction, progress, palette, and a Codex-shaped preview visible. A theme can only be applied after its assets, dimensions, schema, hashes, paths, and injection scope pass validation. Missing or invalid output stops the run instead of quietly falling back to something generic.
 

@@ -8,9 +8,9 @@
 
 <p align="center"><code>单文件 EXE</code> · <code>无需安装</code> · <code>使用本机 Codex</code> · <code>可预览</code> · <code>可随时恢复</code></p>
 
-![Miku 爱心天使主题应用后的 Codex 首页](./docs/images/codex-home.jpg)
+![清透花园浅色主题应用后的 Codex 首页](./docs/images/codex-home.jpg)
 
-> 这是 Codex Skin Studio v0.7.10 实际应用到 Codex 后的界面，不是概念图。你看到的主视觉、四枚图标、配色和文案都由同一组参考素材生成；换一组素材，就会得到一套全新风格的工作台。
+> 这是 Codex Skin Studio v0.7.10 实际应用到 Codex 后的清透花园浅色主题，不是概念图。你看到的主视觉、四枚花园风格图标、暖色调配色和文案都由同一组参考素材生成；换一组素材，就会得到一套全新风格的工作台。
 
 ## 不是“贴一张背景图”，而是重做整套氛围
 
@@ -40,7 +40,7 @@
 3. **选择界面明暗。** 使用“自动 / 明亮 / 暗色”决定基础表面和正文的明暗关系。
 4. **预览，然后应用。** 工作室生成主视觉、图标、色板和文案；你可以只生成预览，也可以直接应用并重启 Codex。
 
-![Codex Skin Studio 创作流程与实时主题预览](./docs/images/studio-create.jpg)
+![Codex Skin Studio 浅色创作流程与实时主题预览](./docs/images/studio-create.jpg)
 
 生成不是一个黑盒按钮。创作台会展示参考素材、创作要求、当前阶段、主题色板和接近真实 Codex 布局的预览。只有完整素材通过尺寸、结构、哈希、路径和作用域校验后，主题才允许被应用；缺图或无效结果会直接停止，不会悄悄降级成廉价替代品。
 
