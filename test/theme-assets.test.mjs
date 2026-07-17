@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { createJob } from '../src/jobs.mjs';
-import { generateSkinAssetsWithLocalCodex } from '../src/theme-assets.mjs';
+import { buildHeroPrompt, generateSkinAssetsWithLocalCodex } from '../src/theme-assets.mjs';
 import { pngHeader, sampleSpec, writePng } from './helpers.mjs';
 
 function analysis() {
@@ -23,6 +23,33 @@ function analysis() {
     sourceRisks: ['do not copy source text'],
   };
 }
+
+test('preserves an explicitly user-supplied adult public figure identity without inferring it from pixels', () => {
+  const reference = analysis();
+  reference.subject = {
+    kind: 'real-person',
+    identity: 'unidentified real person',
+    summary: 'An adult woman in a cinematic portrait.',
+    signatureTraits: ['oval face', 'long dark hair', 'calm gaze'],
+  };
+  reference.mustPreserve = ['facial proportions from the attached reference', 'long dark hair and calm gaze'];
+  const { pet, ...spec } = sampleSpec();
+  spec.assets = {
+    ...spec.assets,
+    subject: 'Liu Yifei, explicitly named by the user as the adult public figure in the reference',
+    heroPrompt: 'Create a clearly stylized fantasy workspace portrait of Liu Yifei while preserving her recognizable likeness from the attached reference.',
+  };
+  const prompt = buildHeroPrompt(spec, reference, 'auto', '[用户需求]\n图中的是刘亦菲，人物不要改变');
+  assert.match(prompt, /Do not infer identity from pixels/);
+  assert.match(prompt, /Use case: reference-guided creative portrait/);
+  assert.match(prompt, /Liu Yifei/);
+  assert.match(prompt, /图中的是刘亦菲，人物不要改变/);
+  assert.match(prompt, /preserve that person's recognizable likeness/);
+  assert.match(prompt, /face shape and proportions/);
+  assert.match(prompt, /without swapping the face, anonymizing the person, blending identities/);
+  assert.match(prompt, /produce exactly one final image/);
+  assert.doesNotMatch(prompt, /avoiding any exact real-person likeness/);
+});
 
 test('collects local Codex hero and icon outputs into the isolated job', { concurrency: false }, async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'skin-assets-'));
@@ -64,6 +91,9 @@ test('collects local Codex hero and icon outputs into the isolated job', { concu
     assert.match(prompts[0], /Mandatory light mode/);
     assert.doesNotMatch(prompts[0], /dark enough for live interface copy/);
     assert.match(prompts[1], /Mandatory light mode/);
+    assert.match(prompts[0], /generic lookalike or a palette-only homage/);
+    assert.match(prompts[1], /produce exactly one final image/);
+    assert.match(prompts[1], /attached hero only as the visual-system reference/);
   } finally {
     for (const name of ['CODEX_SKIN_CODEX', 'CODEX_HOME', 'CODEX_SKIN_HOME', 'FAKE_IMAGE_COUNT', 'FAKE_IMAGE_PROMPTS', 'FAKE_HERO_PNG', 'FAKE_ICONS_PNG']) delete process.env[name];
   }

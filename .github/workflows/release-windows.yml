@@ -1,0 +1,69 @@
+name: Release Windows package
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Check out the tagged source
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify source
+        run: npm run verify
+
+      - name: Build and checksum the portable EXE
+        id: package
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $output = Join-Path $PWD "dist-release"
+          powershell -ExecutionPolicy Bypass -File .\scripts\build-windows-app.ps1 -OutputDirectory $output
+
+          $source = Join-Path $output "CodexSkinStudio.exe"
+          $assetName = "CodexSkinStudio-$tag-Windows-x64.exe"
+          $asset = Join-Path $output $assetName
+          Move-Item -LiteralPath $source -Destination $asset -Force
+
+          $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $asset).Hash
+          $checksum = Join-Path $output "SHA256SUMS.txt"
+          "$hash *$assetName" | Set-Content -LiteralPath $checksum -Encoding ascii
+
+          "asset=$asset" >> $env:GITHUB_OUTPUT
+          "asset_name=$assetName" >> $env:GITHUB_OUTPUT
+          "checksum=$checksum" >> $env:GITHUB_OUTPUT
+          "sha256=$hash" >> $env:GITHUB_OUTPUT
+
+      - name: Create the GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $baseNotes = Join-Path $PWD ".github\release-notes\$tag.md"
+          if (-not (Test-Path -LiteralPath $baseNotes)) {
+            throw "Missing release notes: $baseNotes"
+          }
+
+          $notes = Join-Path $env:RUNNER_TEMP "$tag-notes.md"
+          Copy-Item -LiteralPath $baseNotes -Destination $notes
+          Add-Content -LiteralPath $notes -Value "`n### 下载校验`n`n``````text`n${{ steps.package.outputs.asset_name }}`nSHA-256: ${{ steps.package.outputs.sha256 }}`n``````"
+
+          gh release create $tag `
+            "${{ steps.package.outputs.asset }}" `
+            "${{ steps.package.outputs.checksum }}" `
+            --verify-tag `
+            --latest `
+            --title "Codex Skin Studio $tag" `
+            --notes-file $notes

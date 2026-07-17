@@ -15,7 +15,7 @@ State once that the project has no backend or telemetry; attached images and ima
 
 Read [workflow-contract.md](references/workflow-contract.md). Inspect images before considering the written brief. Save `reference-analysis.json` containing the actual subject, fictional-character identity when recognizable, signature traits, palette, composition, lighting, medium, mood, motifs, must-preserve items, and source risks.
 
-Never identify a real person. When the user names a fictional character such as Hatsune Miku, preserve the identity and signature traits rather than reducing the result to generic colors.
+Never identify a real person from image pixels. If the user explicitly names an adult public figure and states that the reference depicts them, treat the name as user-supplied, preserve the recognizable likeness in a clearly creative and non-deceptive composition, and do not anonymize the subject. Otherwise use `unidentified real person`. When the user names a fictional character such as Hatsune Miku, preserve the identity and signature traits rather than reducing the result to generic colors.
 
 Stop if the extraction is vague, omits the requested subject, or copies source text/watermarks.
 
@@ -32,7 +32,7 @@ Use `$imagegen` for both assets:
 1. Generate a clean 16:10 hero/background. For banner layouts, keep the complete face/head and signature silhouette inside the planned upper-right focal safe region; for fullscreen, respect the natural scene focal point. Keep deliberate copy-safe space and preserve the approved subject. Require no text, logo, watermark, border, fake controls, or screenshot fragments.
 2. Generate a square 2×2 icon atlas with four edge-to-edge quadrants: code exploration, feature building, review, and repair. Require one bold pictogram per quadrant, no text, and readability at 32 px.
 
-Save final assets inside the local working directory. Inspect both outputs. Reject a hero with unusable copy space, lost character identity, ghost text, fake UI, or a mismatched icon style. Do not silently fall back to an original image.
+Save final assets inside the local working directory. Inspect both outputs. Reject a hero with unusable copy space, a lost explicitly requested fictional-character or user-supplied adult-public-figure identity, ghost text, fake UI, or a mismatched icon style. Do not silently fall back to an original image.
 
 ## Stage 4 — Compile and validate
 
