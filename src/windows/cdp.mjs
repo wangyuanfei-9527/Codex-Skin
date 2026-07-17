@@ -87,6 +87,7 @@ export function buildInjectionExpression(payload) {
       document.querySelectorAll('.skin-thread-title-row').forEach(node => node.classList.remove('skin-thread-title-row'));
       document.querySelectorAll('.skin-thread-title').forEach(node => node.classList.remove('skin-thread-title'));
       document.querySelectorAll('.skin-thread-actions').forEach(node => node.classList.remove('skin-thread-actions'));
+      document.querySelectorAll('.skin-thread-location-group').forEach(node => node.classList.remove('skin-thread-location-group'));
       document.querySelectorAll('.skin-window-topbar').forEach(node => node.classList.remove('skin-window-topbar'));
       document.querySelectorAll('.skin-rail-section-header').forEach(node => node.classList.remove('skin-rail-section-header'));
       document.querySelectorAll('.skin-rail-action').forEach(node => node.classList.remove('skin-rail-action'));
@@ -192,8 +193,8 @@ export function buildInjectionExpression(payload) {
         const isNewTask = newTaskLabels.some(label => (button.textContent || '').includes(label));
         button.classList.toggle('skin-new-task', isNewTask);
       }
-      document.querySelectorAll('.skin-thread-header, .skin-thread-header-layout, .skin-thread-title-row, .skin-thread-title, .skin-thread-actions, .skin-window-topbar, .skin-rail-section-header, .skin-rail-action').forEach(node => {
-        node.classList.remove('skin-thread-header', 'skin-thread-header-layout', 'skin-thread-title-row', 'skin-thread-title', 'skin-thread-actions', 'skin-window-topbar', 'skin-rail-section-header', 'skin-rail-action');
+      document.querySelectorAll('.skin-thread-header, .skin-thread-header-layout, .skin-thread-title-row, .skin-thread-title, .skin-thread-actions, .skin-thread-location-group, .skin-window-topbar, .skin-rail-section-header, .skin-rail-action').forEach(node => {
+        node.classList.remove('skin-thread-header', 'skin-thread-header-layout', 'skin-thread-title-row', 'skin-thread-title', 'skin-thread-actions', 'skin-thread-location-group', 'skin-window-topbar', 'skin-rail-section-header', 'skin-rail-action');
       });
       document.querySelector('[class~="group/application-menu-top-bar"]')?.classList.add('skin-window-topbar');
       for (const button of document.querySelectorAll('button[aria-label]')) {
@@ -206,12 +207,17 @@ export function buildInjectionExpression(payload) {
       const threadHeaderLayout = threadHeader?.querySelector('.draggable.grid.w-full');
       const threadTitleRow = threadHeaderLayout?.firstElementChild;
       const threadTitle = threadTitleRow?.firstElementChild;
-      const threadActions = threadHeader?.querySelector('.ms-auto');
+      const locationLabels = ['打开位置', 'Open location'];
+      const locationButton = [...(threadHeader?.querySelectorAll('button') || [])]
+        .find(button => locationLabels.some(label => (button.textContent || '').includes(label)));
+      const locationGroup = locationButton?.closest('.inline-flex');
+      const threadActions = locationGroup?.closest('.ms-auto') || threadHeader?.querySelector('.ms-auto');
       threadHeader?.classList.add('skin-thread-header');
       threadHeaderLayout?.classList.add('skin-thread-header-layout');
       threadTitleRow?.classList.add('skin-thread-title-row');
       threadTitle?.classList.add('skin-thread-title');
       threadActions?.classList.add('skin-thread-actions');
+      locationGroup?.classList.add('skin-thread-location-group');
     };
     markNativeControls();
     const scheduler = { timer: null };

@@ -28,6 +28,8 @@ test('runtime patch upgrades historical themes without regeneration', () => {
   const css = codexRuntimePatchCss(sampleSpec());
   assert.match(css, /skin-thread-header-layout/);
   assert.match(css, /skin-thread-actions/);
+  assert.match(css, /button\[class~="bg-token-bg-fog"\]/);
+  assert.match(css, /skin-thread-location-group/);
   assert.match(css, /skin-window-topbar/);
   assert.match(css, /skin-rail-section-header/);
   assert.match(css, /position: fixed !important/);

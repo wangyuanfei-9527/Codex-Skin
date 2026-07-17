@@ -77,10 +77,10 @@ export function codexRuntimePatchCss(design) {
   z-index: 0;
   inset: 47px 0 0;
   pointer-events: none;
-  opacity: ${Math.max(0.34, Math.min(0.48, e.overlayOpacity * 0.95)).toFixed(2)};
+  opacity: ${Math.max(0.48, Math.min(0.60, e.overlayOpacity * 1.30)).toFixed(2)};
   background: url("${BACKGROUND_PLACEHOLDER}") no-repeat ${e.backgroundPosition} / cover;
-  filter: blur(${Math.min(e.blur, 3)}px) saturate(.92) contrast(.98);
-  transform: scale(1.012);
+  filter: blur(${Math.min(e.blur, 1.5)}px) saturate(.98) contrast(1);
+  transform: scale(1.006);
 }
 :root.codex-skin-studio-active main.main-surface:not(.skin-home-shell)::after {
   content: "";
@@ -88,7 +88,7 @@ export function codexRuntimePatchCss(design) {
   z-index: 0;
   inset: 47px 0 0;
   pointer-events: none;
-  background: linear-gradient(90deg, ${hexRgba(p.background, 0.78)} 0%, ${hexRgba(p.background, 0.52)} 42%, ${hexRgba(p.background, 0.28)} 68%, ${hexRgba(p.surface, 0.14)} 100%);
+  background: linear-gradient(90deg, ${hexRgba(p.background, 0.66)} 0%, ${hexRgba(p.background, 0.38)} 42%, ${hexRgba(p.background, 0.16)} 68%, ${hexRgba(p.surface, 0.06)} 100%);
 }
 :root.codex-skin-studio-active main.main-surface > *:not(header.app-header-tint) { position: relative; z-index: 1; }
 :root.codex-skin-studio-active main.main-surface > header.app-header-tint {
@@ -137,6 +137,18 @@ export function codexRuntimePatchCss(design) {
 }
 :root.codex-skin-studio-active .skin-thread-actions button svg {
   color: ${hexRgba(p.text, 0.86)} !important;
+  opacity: 1 !important;
+}
+:root.codex-skin-studio-active main.main-surface > header.app-header-tint button[class~="bg-token-bg-fog"],
+:root.codex-skin-studio-active .skin-thread-location-group button {
+  color: ${hexRgba(p.text, 0.94)} !important;
+  background-color: ${hexRgba(p.surfaceAlt, 0.86)} !important;
+  background-image: none !important;
+  border-color: ${hexRgba(p.border, 0.68)} !important;
+}
+:root.codex-skin-studio-active main.main-surface > header.app-header-tint button[class~="bg-token-bg-fog"] *,
+:root.codex-skin-studio-active .skin-thread-location-group button * {
+  color: inherit !important;
   opacity: 1 !important;
 }
 :root.codex-skin-studio-active .skin-window-topbar {
