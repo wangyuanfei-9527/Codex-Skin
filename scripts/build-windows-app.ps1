@@ -27,6 +27,8 @@ $node = $nodeCommand.Source
 
 $frameworkRoot = Join-Path $env:WINDIR "Microsoft.NET\Framework64\v4.0.30319"
 if (-not (Test-Path -LiteralPath $frameworkRoot)) { throw "The .NET Framework runtime assemblies were not found." }
+$icon = Join-Path $root "app\CodexSkinStudio.ico"
+if (-not (Test-Path -LiteralPath $icon)) { throw "The application icon was not found: $icon" }
 
 if (Test-Path -LiteralPath $build) { Remove-Item -LiteralPath $build -Recurse -Force }
 New-Item -ItemType Directory -Path $runtimeStage -Force | Out-Null
@@ -58,6 +60,7 @@ $arguments = @(
   "/optimize+",
   "/platform:x64",
   "/out:$exe",
+  "/win32icon:$icon",
   "/win32manifest:$(Join-Path $root 'app\CodexSkinStudio.manifest')",
   "/resource:$archive,CodexSkinStudio.Runtime.zip",
   "/resource:$node,CodexSkinStudio.Node.exe"

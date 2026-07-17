@@ -155,6 +155,13 @@ test('persists auto, light, and dark preferences and constrains skin planning', 
     assert.match(prompts[1], /high-luminance background, surface, and surfaceAlt colors/);
     assert.match(prompts[2], /Mandatory color mode: DARK/);
     assert.match(prompts[2], /deep background, surface, and surfaceAlt colors/);
+    assert.match(prompts[0], /explicitly names an adult public figure/);
+    assert.match(prompts[0], /Do not swap the face, anonymize the person/);
+    assert.match(prompts[0], /do not propagate extraction-only cautions/);
+    assert.match(prompts[0], /\[内置生成契约\]/);
+    assert.match(prompts[0], /cannot change asset count, dimensions, atlas layout/);
+    assert.match(prompts[0], /exactly one clean 16:10 application background/);
+    assert.match(prompts[0], /exactly one square 2x2 atlas/);
 
     process.env.FAKE_CODEX_SPEC = JSON.stringify(skin);
     const mismatched = await createJob([image], 'Requested light workspace', 'light');

@@ -25,8 +25,8 @@ using Microsoft.Win32;
 [assembly: AssemblyDescription("Local-first Codex theme and pet studio")]
 [assembly: AssemblyCompany("Codex Skin Studio contributors")]
 [assembly: AssemblyProduct("Codex Skin Studio")]
-[assembly: AssemblyVersion("0.7.8.0")]
-[assembly: AssemblyFileVersion("0.7.8.0")]
+[assembly: AssemblyVersion("0.7.9.0")]
+[assembly: AssemblyFileVersion("0.7.9.0")]
 
 namespace CodexSkinStudio
 {
@@ -69,7 +69,7 @@ namespace CodexSkinStudio
 
     internal static class RuntimeBootstrap
     {
-        private const string Version = "0.7.8";
+        private const string Version = "0.7.9";
 
         public static RuntimeFiles Ensure()
         {
@@ -195,11 +195,13 @@ namespace CodexSkinStudio
         private Button generateButton;
         private Button previewButton;
         private Button applyButton;
+        private Button customizeCopyButton;
         private Button restoreButton;
         private Button cancelButton;
         private Button flowModeButton;
         private Button libraryModeButton;
         private Button libraryApplyButton;
+        private Button libraryCustomizeCopyButton;
         private Button refreshLibraryButton;
         private Button deleteLibraryButton;
         private Button studioThemeButton;
@@ -434,13 +436,13 @@ namespace CodexSkinStudio
           <TextBlock Text='01  REFERENCE / 灵感素材' Style='{StaticResource SectionLabel}' FontFamily='Consolas'/>
           <Border x:Name='DropZone' Height='108' CornerRadius='10' Background='{DynamicResource Raised}' BorderBrush='{DynamicResource Border}' BorderThickness='1' Margin='0,0,0,12'>
             <Grid><StackPanel VerticalAlignment='Center' HorizontalAlignment='Center'>
-              <TextBlock Text='拖入参考图片' FontSize='14' FontWeight='SemiBold' HorizontalAlignment='Center'/>
-              <TextBlock Text='PNG、JPEG 或 WebP，最多 32 张' FontSize='11' Foreground='{DynamicResource Muted}' Margin='0,5,0,10' HorizontalAlignment='Center'/>
+              <TextBlock Text='拖入一张参考图片' FontSize='14' FontWeight='SemiBold' HorizontalAlignment='Center'/>
+              <TextBlock Text='PNG、JPEG 或 WebP，一次仅一张' FontSize='11' Foreground='{DynamicResource Muted}' Margin='0,5,0,10' HorizontalAlignment='Center'/>
               <Button x:Name='AddImagesButton' Content='选择图片' Style='{StaticResource StudioButton}' Padding='13,6'/>
             </StackPanel></Grid>
           </Border>
           <Grid Margin='0,0,0,8'><Grid.ColumnDefinitions><ColumnDefinition Width='*'/><ColumnDefinition Width='Auto'/></Grid.ColumnDefinitions>
-            <TextBlock Text='已选素材' FontSize='12' Foreground='{DynamicResource Muted}' VerticalAlignment='Center'/>
+            <TextBlock Text='当前图片' FontSize='12' Foreground='{DynamicResource Muted}' VerticalAlignment='Center'/>
             <Button x:Name='ClearImagesButton' Grid.Column='1' Content='清空' Style='{StaticResource StudioButton}' Padding='9,4' FontSize='11'/>
           </Grid>
           <ListBox x:Name='ReferenceList' Height='142' Background='Transparent' BorderThickness='0' ScrollViewer.HorizontalScrollBarVisibility='Disabled' Margin='0,0,0,20'>
@@ -468,7 +470,7 @@ namespace CodexSkinStudio
           </ListBox>
 
           <TextBlock Text='02  DIRECTION / 创作需求' Style='{StaticResource SectionLabel}' FontFamily='Consolas'/>
-          <TextBlock Text='风格导演（内置提示词）' FontSize='11' Foreground='{DynamicResource Muted}' Margin='0,0,0,7'/>
+          <TextBlock Text='风格与样式（可选）' FontSize='11' Foreground='{DynamicResource Muted}' Margin='0,0,0,7'/>
           <ComboBox x:Name='PresetBox' SelectedIndex='0' Margin='0,0,0,8' AutomationProperties.Name='内置风格导演'>
             <ComboBoxItem Content='自动判断 · 从图片提炼原创方向'/>
             <ComboBoxItem Content='清透收藏 · 纸感与植物留白'/>
@@ -487,7 +489,7 @@ namespace CodexSkinStudio
           </ComboBox>
           <TextBlock Text='这里控制生成出来的 Codex 主题，顶部按钮控制工作台自身外观。' FontSize='9.5' Foreground='{DynamicResource Muted}' TextWrapping='Wrap' Margin='2,0,2,9'/>
           <TextBox x:Name='BriefBox' Height='124' AcceptsReturn='True' TextWrapping='Wrap' VerticalScrollBarVisibility='Auto'
-                   Text='以参考图片中的主体和核心元素为主题，保留可识别虚构角色的标志特征。先生成适合 Codex 的横版主视觉与统一图标，再设计侧栏、卡片、输入区和主题文案。整体适合长时间使用。'/>
+                   Text='整体克制、耐看，适合长时间使用；可按喜好补充配色、材质、光线和装饰密度。'/>
           <Border Background='{DynamicResource InfoBackground}' BorderBrush='{DynamicResource InfoBorder}' BorderThickness='1' CornerRadius='8' Padding='11' Margin='0,13,0,0'>
             <TextBlock Text='当前流程只生成皮肤，不会读取、安装或修改 ~/.codex/pets。图片通过你的本地 Codex 登录处理。' FontSize='10.5' Foreground='{DynamicResource InfoText}' TextWrapping='Wrap' LineHeight='17'/>
           </Border>
@@ -600,6 +602,7 @@ namespace CodexSkinStudio
                 <Button x:Name='GenerateButton' Content='生成皮肤并应用' Style='{StaticResource PrimaryButton}' Margin='0,0,0,9'/>
                 <Button x:Name='PreviewButton' Content='只生成皮肤预览' Style='{StaticResource StudioButton}' Margin='0,0,0,9'/>
                 <Button x:Name='ApplyButton' Content='应用当前预览' Style='{StaticResource StudioButton}' IsEnabled='False' Margin='0,0,0,9'/>
+                <Button x:Name='CustomizeCopyButton' Content='自定义文案' ToolTip='编辑顶部品牌、主视觉、签名和四张功能卡片的文字' Style='{StaticResource StudioButton}' IsEnabled='False' Margin='0,0,0,9'/>
                 <Button x:Name='CancelButton' Content='取消当前任务' Style='{StaticResource StudioButton}' Visibility='Collapsed'/>
               </StackPanel>
 
@@ -638,6 +641,7 @@ namespace CodexSkinStudio
               </Grid>
               <StackPanel Grid.Row='2' Margin='0,14,0,0'>
                 <Button x:Name='LibraryApplyButton' Content='应用选中主题' Style='{StaticResource PrimaryButton}' IsEnabled='False' Margin='0,0,0,9'/>
+                <Button x:Name='LibraryCustomizeCopyButton' Content='自定义文案' ToolTip='保存为新的主题版本并立即应用' Style='{StaticResource StudioButton}' IsEnabled='False' Margin='0,0,0,9'/>
                 <Grid><Grid.ColumnDefinitions><ColumnDefinition Width='*'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions>
                   <Button x:Name='RefreshLibraryButton' Content='刷新主题库' Style='{StaticResource StudioButton}' Margin='0,0,4,0'/>
                   <Button x:Name='DeleteLibraryButton' Grid.Column='1' Content='删除主题' ToolTip='删除当前选中的历史主题' Style='{StaticResource StudioButton}' Foreground='{DynamicResource Danger}' BorderBrush='{DynamicResource DangerBorder}' Margin='4,0,0,0' IsEnabled='False'/>
@@ -716,11 +720,13 @@ namespace CodexSkinStudio
             generateButton = Find<Button>("GenerateButton");
             previewButton = Find<Button>("PreviewButton");
             applyButton = Find<Button>("ApplyButton");
+            customizeCopyButton = Find<Button>("CustomizeCopyButton");
             restoreButton = Find<Button>("RestoreButton");
             cancelButton = Find<Button>("CancelButton");
             flowModeButton = Find<Button>("FlowModeButton");
             libraryModeButton = Find<Button>("LibraryModeButton");
             libraryApplyButton = Find<Button>("LibraryApplyButton");
+            libraryCustomizeCopyButton = Find<Button>("LibraryCustomizeCopyButton");
             refreshLibraryButton = Find<Button>("RefreshLibraryButton");
             deleteLibraryButton = Find<Button>("DeleteLibraryButton");
             studioThemeButton = Find<Button>("StudioThemeButton");
@@ -745,11 +751,13 @@ namespace CodexSkinStudio
             generateButton.Click += async delegate { await GenerateAsync(true); };
             previewButton.Click += async delegate { await GenerateAsync(false); };
             applyButton.Click += async delegate { await ApplyAsync(); };
+            customizeCopyButton.Click += async delegate { await CustomizeCopyAsync(); };
             restoreButton.Click += async delegate { await RestoreAsync(); };
             cancelButton.Click += delegate { CancelActiveProcess(); };
             flowModeButton.Click += delegate { ShowLibrary(false); };
             libraryModeButton.Click += delegate { ShowLibrary(true); };
             libraryApplyButton.Click += async delegate { await ApplyAsync(); };
+            libraryCustomizeCopyButton.Click += async delegate { await CustomizeCopyAsync(); };
             refreshLibraryButton.Click += delegate { RefreshThemeLibrary(false); };
             deleteLibraryButton.Click += delegate { DeleteSelectedTheme(); };
             studioThemeButton.Click += delegate
@@ -879,33 +887,38 @@ namespace CodexSkinStudio
         {
             var dialog = new OpenFileDialog
             {
-                Multiselect = true,
+                Multiselect = false,
                 Filter = "图片文件|*.png;*.jpg;*.jpeg;*.webp|所有文件|*.*",
-                Title = "选择主题参考图片"
+                Title = "选择一张主题参考图片"
             };
-            if (dialog.ShowDialog(Window) == true) AddImages(dialog.FileNames);
+            if (dialog.ShowDialog(Window) == true) AddImages(new[] { dialog.FileName });
         }
 
         private void AddImages(IEnumerable<string> files)
         {
             string[] allowed = { ".png", ".jpg", ".jpeg", ".webp" };
+            string selected = null;
             foreach (string file in files)
             {
-                if (references.Count >= 32) break;
                 string full = Path.GetFullPath(file);
                 if (!File.Exists(full) || !allowed.Contains(Path.GetExtension(full).ToLowerInvariant())) continue;
-                if (references.Any(item => String.Equals(item.Path, full, StringComparison.OrdinalIgnoreCase))) continue;
-                references.Add(new ReferenceItem { Path = full, Name = Path.GetFileName(full), Thumbnail = LoadBitmap(full) });
+                selected = full;
+                break;
             }
-            if (references.Count > 0)
+            if (selected == null)
             {
-                referenceList.SelectedIndex = references.Count - 1;
-                stepOne.Text = references.Count + " 张本地图片已就绪";
-                canvasHint.Visibility = Visibility.Collapsed;
-                previewTitle.Text = "灵感画布";
-                previewSubtitle.Text = "生成前可以切换素材查看构图。";
-                SetStatus("素材已加入，可以开始创作");
+                SetStatus("请选择一张 PNG、JPEG 或 WebP 图片");
+                return;
             }
+
+            references.Clear();
+            references.Add(new ReferenceItem { Path = selected, Name = Path.GetFileName(selected), Thumbnail = LoadBitmap(selected) });
+            referenceList.SelectedIndex = 0;
+            stepOne.Text = "1 张本地图片已就绪";
+            canvasHint.Visibility = Visibility.Collapsed;
+            previewTitle.Text = "灵感画布";
+            previewSubtitle.Text = "生成前可以更换图片查看构图。";
+            SetStatus("参考图片已就绪，可以开始创作");
         }
 
         private static BitmapImage LoadBitmap(string path)
@@ -1194,6 +1207,236 @@ namespace CodexSkinStudio
                 petFrame.Visibility = Visibility.Visible;
             }
             canvasHint.Visibility = Visibility.Collapsed;
+            customizeCopyButton.IsEnabled = !busy;
+            libraryCustomizeCopyButton.IsEnabled = !busy;
+        }
+
+        private TextBox AddCopyEditorField(StackPanel panel, string label, string value, int maxLength, bool multiline)
+        {
+            panel.Children.Add(new TextBlock
+            {
+                Text = label + "  ·  最多 " + maxLength + " 字符",
+                FontSize = 11,
+                Foreground = (Brush)Window.Resources["Muted"],
+                Margin = new Thickness(0, 0, 0, 6)
+            });
+            var box = new TextBox
+            {
+                Text = value ?? String.Empty,
+                MaxLength = maxLength,
+                AcceptsReturn = multiline,
+                TextWrapping = multiline ? TextWrapping.Wrap : TextWrapping.NoWrap,
+                VerticalScrollBarVisibility = multiline ? ScrollBarVisibility.Auto : ScrollBarVisibility.Hidden,
+                MinHeight = multiline ? 56 : 32,
+                Padding = new Thickness(9, 6, 9, 6),
+                Margin = new Thickness(0, 0, 0, 14),
+                Background = (Brush)Window.Resources["InputBackground"],
+                Foreground = (Brush)Window.Resources["Text"],
+                BorderBrush = (Brush)Window.Resources["Border"],
+                BorderThickness = new Thickness(1)
+            };
+            panel.Children.Add(box);
+            return box;
+        }
+
+        private Dictionary<string, object> ShowCopyEditor()
+        {
+            Dictionary<string, object> manifest = ReadJson(Path.Combine(currentBundle, "manifest.json"));
+            Dictionary<string, object> design = ReadJson(ResolveBundleFile(currentBundle, StringValue(manifest, "design", null)));
+            Dictionary<string, object> copy = DictionaryValue(design, "copy");
+            object[] currentTitles = ArrayValue(copy, "cardTitles");
+            object[] currentSubtitles = ArrayValue(copy, "cardSubtitles");
+
+            var editor = new Window
+            {
+                Title = "自定义主题文案",
+                Owner = Window,
+                Width = 720,
+                Height = 780,
+                MinWidth = 620,
+                MinHeight = 620,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Background = (Brush)Window.Resources["AppBackground"],
+                Foreground = (Brush)Window.Resources["Text"],
+                FontFamily = new FontFamily("Microsoft YaHei UI")
+            };
+            var shell = new DockPanel { Margin = new Thickness(22) };
+            editor.Content = shell;
+
+            var header = new StackPanel { Margin = new Thickness(0, 0, 0, 16) };
+            header.Children.Add(new TextBlock { Text = "自定义主题文案", FontSize = 20, FontWeight = FontWeights.SemiBold });
+            header.Children.Add(new TextBlock
+            {
+                Text = "顶部品牌、主视觉标题、右上签名和四张功能卡片均可独立修改。保存后会生成新的主题版本、立即应用并重启 Codex。",
+                FontSize = 11,
+                TextWrapping = TextWrapping.Wrap,
+                Foreground = (Brush)Window.Resources["Muted"],
+                Margin = new Thickness(0, 6, 0, 0)
+            });
+            DockPanel.SetDock(header, Dock.Top);
+            shell.Children.Add(header);
+
+            var footer = new Grid { Margin = new Thickness(0, 16, 0, 0) };
+            footer.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            footer.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            footer.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            var note = new TextBlock
+            {
+                Text = "原主题保持不变，新版本会保存在主题库。",
+                Foreground = (Brush)Window.Resources["Muted"],
+                FontSize = 10.5,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            footer.Children.Add(note);
+            var cancel = new Button
+            {
+                Content = "取消",
+                MinWidth = 88,
+                Padding = new Thickness(14, 7, 14, 7),
+                Margin = new Thickness(10, 0, 0, 0),
+                Background = (Brush)Window.Resources["Raised"],
+                Foreground = (Brush)Window.Resources["Text"],
+                BorderBrush = (Brush)Window.Resources["Border"]
+            };
+            Grid.SetColumn(cancel, 1);
+            footer.Children.Add(cancel);
+            var save = new Button
+            {
+                Content = "保存并应用",
+                MinWidth = 116,
+                Padding = new Thickness(14, 7, 14, 7),
+                Margin = new Thickness(10, 0, 0, 0),
+                Background = (Brush)Window.Resources["Accent"],
+                Foreground = (Brush)Window.Resources["AccentText"],
+                BorderBrush = (Brush)Window.Resources["Accent"]
+            };
+            Grid.SetColumn(save, 2);
+            footer.Children.Add(save);
+            DockPanel.SetDock(footer, Dock.Bottom);
+            shell.Children.Add(footer);
+
+            var fields = new StackPanel { Margin = new Thickness(2, 2, 10, 2) };
+            var scroll = new ScrollViewer { Content = fields, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+            shell.Children.Add(scroll);
+
+            TextBox name = AddCopyEditorField(fields, "顶部品牌标题", StringValue(design, "name", StringValue(manifest, "name", "未命名主题")), 80, false);
+            TextBox summary = AddCopyEditorField(fields, "顶部品牌说明", StringValue(design, "summary", StringValue(manifest, "summary", "本地主题")), 300, true);
+            TextBox heroTitle = AddCopyEditorField(fields, "主视觉大标题", StringValue(copy, "heroTitle", name.Text), 70, false);
+            TextBox heroSubtitle = AddCopyEditorField(fields, "主视觉副标题", StringValue(copy, "heroSubtitle", summary.Text), 90, true);
+            TextBox signature = AddCopyEditorField(fields, "右上角签名", StringValue(copy, "signature", "Theme Studio"), 26, false);
+            var cardTitles = new TextBox[4];
+            var cardSubtitles = new TextBox[4];
+            for (int index = 0; index < 4; index++)
+            {
+                fields.Children.Add(new Border
+                {
+                    Height = 1,
+                    Background = (Brush)Window.Resources["Border"],
+                    Margin = new Thickness(0, 4, 0, 14)
+                });
+                fields.Children.Add(new TextBlock
+                {
+                    Text = "功能卡片 " + (index + 1),
+                    FontSize = 13,
+                    FontWeight = FontWeights.SemiBold,
+                    Margin = new Thickness(0, 0, 0, 10)
+                });
+                string title = currentTitles != null && index < currentTitles.Length ? Convert.ToString(currentTitles[index]) : "功能卡片";
+                string subtitle = currentSubtitles != null && index < currentSubtitles.Length ? Convert.ToString(currentSubtitles[index]) : "主题说明";
+                cardTitles[index] = AddCopyEditorField(fields, "卡片标题", title, 24, false);
+                cardSubtitles[index] = AddCopyEditorField(fields, "卡片副标题", subtitle, 36, false);
+            }
+
+            cancel.Click += delegate { editor.DialogResult = false; };
+            save.Click += delegate
+            {
+                var all = new List<TextBox> { name, summary, heroTitle, heroSubtitle, signature };
+                all.AddRange(cardTitles);
+                all.AddRange(cardSubtitles);
+                TextBox invalid = all.FirstOrDefault(box => String.IsNullOrWhiteSpace(box.Text));
+                if (invalid != null)
+                {
+                    invalid.Focus();
+                    MessageBox.Show(editor, "所有文案都需要填写；可以保留原文字，但不能留空。", "文案未完成", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+                editor.DialogResult = true;
+            };
+            if (editor.ShowDialog() != true) return null;
+
+            return new Dictionary<string, object>
+            {
+                { "name", name.Text.Trim() },
+                { "summary", summary.Text.Trim() },
+                { "copy", new Dictionary<string, object>
+                    {
+                        { "heroTitle", heroTitle.Text.Trim() },
+                        { "heroSubtitle", heroSubtitle.Text.Trim() },
+                        { "signature", signature.Text.Trim() },
+                        { "cardTitles", cardTitles.Select(box => box.Text.Trim()).ToArray() },
+                        { "cardSubtitles", cardSubtitles.Select(box => box.Text.Trim()).ToArray() }
+                    }
+                }
+            };
+        }
+
+        private async Task CustomizeCopyAsync()
+        {
+            if (String.IsNullOrWhiteSpace(currentBundle) || busy) return;
+            Dictionary<string, object> changes;
+            try
+            {
+                changes = ShowCopyEditor();
+            }
+            catch (Exception error)
+            {
+                MessageBox.Show(Window, error.Message, "读取主题文案失败", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            if (changes == null) return;
+
+            string copyFile = null;
+            SetBusy(true, "正在保存自定义文案");
+            try
+            {
+                string workRoot = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "CodexSkinStudio", "desktop-bundles");
+                Directory.CreateDirectory(workRoot);
+                string token = "custom-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N").Substring(0, 6);
+                copyFile = Path.Combine(workRoot, token + ".copy.json");
+                string output = Path.Combine(workRoot, token);
+                File.WriteAllText(copyFile, json.Serialize(changes), new UTF8Encoding(false));
+
+                CliResult customized = await RunCliAsync(new[] { "customize-copy", currentBundle, "--copy-file", copyFile, "--output", output });
+                if (customized.ExitCode != 0) throw new InvalidOperationException(UsefulError(customized));
+                Dictionary<string, object> response = json.DeserializeObject(customized.StandardOutput) as Dictionary<string, object>;
+                if (response == null || !response.ContainsKey("bundle")) throw new InvalidOperationException("文案已处理，但没有返回新的主题包。");
+                currentBundle = Convert.ToString(response["bundle"]);
+                LoadBundlePreview(currentBundle);
+                RefreshThemeLibrary(false);
+
+                SetStatus("自定义文案已保存，正在重新应用主题");
+                CliResult applied = await RunCliAsync(new[] { "apply-skin", currentBundle, "--restart" });
+                if (applied.ExitCode != 0) throw new InvalidOperationException(UsefulError(applied));
+                RefreshThemeLibrary(false);
+                stepFour.Text = "自定义文案已持久化并安排重启";
+                bundleText.Text = "文案已应用";
+                SetStatus("自定义文案已生效，Codex 将自动重新打开");
+            }
+            catch (Exception error)
+            {
+                SetStatus(error.Message);
+                MessageBox.Show(Window, error.Message, "自定义文案失败", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                if (!String.IsNullOrWhiteSpace(copyFile) && File.Exists(copyFile))
+                {
+                    try { File.Delete(copyFile); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+                }
+                SetBusy(false, null);
+            }
         }
 
         private void ShowLibrary(bool show)
@@ -1268,6 +1511,7 @@ namespace CodexSkinStudio
                 themeLibraryList.ScrollIntoView(selected);
             }
             libraryApplyButton.IsEnabled = !busy && selected != null;
+            libraryCustomizeCopyButton.IsEnabled = !busy && selected != null;
             deleteLibraryButton.IsEnabled = !busy && selected != null && !selected.IsApplied;
         }
 
@@ -1279,7 +1523,9 @@ namespace CodexSkinStudio
                 LoadBundlePreview(currentBundle);
                 bundleText.Text = "主题库预览";
                 applyButton.IsEnabled = !busy;
+                customizeCopyButton.IsEnabled = !busy;
                 libraryApplyButton.IsEnabled = !busy;
+                libraryCustomizeCopyButton.IsEnabled = !busy;
                 deleteLibraryButton.IsEnabled = !busy && !selected.IsApplied;
                 stepFour.Text = "已从主题库载入，可随时切换应用";
                 SetStatus("正在预览：" + selected.Name);
@@ -1288,7 +1534,9 @@ namespace CodexSkinStudio
             {
                 currentBundle = null;
                 applyButton.IsEnabled = false;
+                customizeCopyButton.IsEnabled = false;
                 libraryApplyButton.IsEnabled = false;
+                libraryCustomizeCopyButton.IsEnabled = false;
                 deleteLibraryButton.IsEnabled = false;
                 SetStatus("主题预览失败：" + error.Message);
             }
@@ -1342,6 +1590,8 @@ namespace CodexSkinStudio
                     previewSubtitle.Text = "下一次生成的主题会自动保存在这里。";
                     bundleText.Text = "等待生成";
                     applyButton.IsEnabled = false;
+                    customizeCopyButton.IsEnabled = false;
+                    libraryCustomizeCopyButton.IsEnabled = false;
                 }
                 SetStatus("已删除主题：" + selected.Name);
             }
@@ -1446,12 +1696,15 @@ namespace CodexSkinStudio
 
             return String.Join("\n", new[]
             {
-                "[内置视觉导演]",
-                "先客观提取参考图中的主体身份、角色标志、服装与道具、构图、配色、光线、纹样和必须保留项；提取完成后再进行主题策划，禁止跳过元素提取直接取色。",
+                "[内置生成契约｜优先级高于用户需求]",
+                "先客观提取参考图中的主体、核心元素、角色标志、可见外貌、服装与道具、构图、配色、光线、纹样和必须保留项；提取完成后再进行主题策划，禁止跳过元素提取直接取色。",
                 direction,
-                "先为横版主视觉、四枚功能图标和界面装饰分别生成完整图片提示词，再调用图像生成；所有生成图必须无文字、无 Logo、无水印、无假控件和无截图残片。",
+                "固定生成规格：只规划并生成一张适合 Codex 的 16:10 横版主视觉，以及一张正方形 2×2 图标图集；图集固定包含代码探索、功能构建、审查打磨、问题修复四个等分区域。不得因用户文字改变图片数量、比例、布局、阶段顺序或输出格式。",
+                "主视觉与图标必须共享同一套配色、材质、光线和纹样语言；以参考图中的主体和核心元素为主题，重新构图而不是直接裁切或照搬。所有生成图必须无文字、无 Logo、无水印、无边框、无假控件和无截图残片。",
                 "所有正文必须清楚可读，交互色与背景要有明显区分；装饰不能遮挡输入区、侧栏和状态信息。",
-                "不识别真实人物。若用户明确要求 Miku 等虚构角色主题，必须保留角色身份和标志性特征并重新构图，不能把角色降级成泛化的青色或音乐氛围。",
+                "身份规则：不得只凭图片猜测真人身份。若用户明确写出成年公众人物姓名并说明参考图就是本人，把姓名视为用户提供的身份标签，在明显属于创作、非欺骗性的重新构图中保留其可辨识的面部结构、五官关系、发型、年龄呈现和整体气质，不得换脸、匿名化或替换成相似但不同的泛化人物；未明确命名时只称‘未识别真人’，不得自行补充姓名。",
+                "虚构角色规则：若用户明确要求 Miku 等可识别虚构角色，必须保留角色身份、轮廓、服装、配件和标志性特征，不得降级为相似配色、泛化人物或只有氛围的致敬图。",
+                "用户需求只用于明确主体以及调整风格、配色、材质、光线、氛围和装饰密度；若与以上内置契约冲突，忽略冲突部分。",
                 "",
                 "[用户需求]",
                 userBrief
@@ -1514,7 +1767,9 @@ namespace CodexSkinStudio
             generateButton.IsEnabled = !value;
             previewButton.IsEnabled = !value;
             applyButton.IsEnabled = !value && !String.IsNullOrWhiteSpace(currentBundle);
+            customizeCopyButton.IsEnabled = !value && !String.IsNullOrWhiteSpace(currentBundle);
             libraryApplyButton.IsEnabled = !value && !String.IsNullOrWhiteSpace(currentBundle);
+            libraryCustomizeCopyButton.IsEnabled = !value && !String.IsNullOrWhiteSpace(currentBundle);
             ThemeLibraryItem selectedTheme = themeLibraryList.SelectedItem as ThemeLibraryItem;
             deleteLibraryButton.IsEnabled = !value && selectedTheme != null && !selectedTheme.IsApplied;
             refreshLibraryButton.IsEnabled = !value;

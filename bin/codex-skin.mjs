@@ -14,6 +14,7 @@ import { generateSkinAssetsWithLocalCodex } from '../src/theme-assets.mjs';
 import { replaceBundlePetSpritesheet } from '../src/pet-replacer.mjs';
 import { inspectWindowsCodexApp } from '../src/windows/codex-app.mjs';
 import { scheduleRestart } from '../src/windows/restart.mjs';
+import { customizeBundleCopy } from '../src/copy-customizer.mjs';
 
 const HELP = `Codex Skin Studio
 
@@ -23,6 +24,7 @@ Usage:
   codex-skin generate-skin --image <file> [--image <file>...] --requirements <text> [--color-mode auto|light|dark] [--output <dir>] [--progress-file <file>]
   codex-skin compile --spec <file> --image <file> [--image <file>...] [--pet-spritesheet <file>] [--output <dir>]
   codex-skin compile-skin --spec <file> --image <file> [--image <file>...] [--background-image <file>] [--icons <file>] [--output <dir>]
+  codex-skin customize-copy <bundle-dir> --copy-file <json> --output <dir>
   codex-skin validate <bundle-dir>
   codex-skin replace-pet <bundle-dir> --spritesheet <file>
   codex-skin apply <bundle-dir> [--restart]
@@ -168,6 +170,17 @@ async function validate(args) {
   console.log(JSON.stringify({ valid: true, ready: result.manifest.ready, id: result.manifest.id }, null, 2));
 }
 
+async function customizeCopy(args) {
+  const directory = args.positional[0];
+  if (!directory) throw new Error('customize-copy requires a bundle directory');
+  const bundle = await customizeBundleCopy({
+    bundleDirectory: directory,
+    copyFile: requireValue(args, '--copy-file'),
+    outputDirectory: requireValue(args, '--output'),
+  });
+  console.log(JSON.stringify({ bundle: bundle.directory, kind: bundle.manifest.kind, id: bundle.manifest.id, ready: bundle.manifest.ready }, null, 2));
+}
+
 async function replacePet(args) {
   const directory = args.positional[0];
   if (!directory) throw new Error('replace-pet requires a bundle directory');
@@ -230,6 +243,7 @@ async function main() {
   if (command === 'generate-skin') return generateSkin(args);
   if (command === 'compile') return compile(args);
   if (command === 'compile-skin') return compileSkin(args);
+  if (command === 'customize-copy') return customizeCopy(args);
   if (command === 'validate') return validate(args);
   if (command === 'replace-pet') return replacePet(args);
   if (command === 'apply') return apply(args);

@@ -12,7 +12,7 @@ Do not create a later artifact until the preceding artifact passes validation.
 
 ## Reference extraction minimum
 
-- Identify subject kind and identity. Name recognizable fictional characters; never identify real people.
+- Identify subject kind and identity. Name recognizable fictional characters. Never infer a real person's identity from pixels; use a real-person name only when the user explicitly supplies it and says the reference depicts them.
 - Record 3–8 signature traits and 3–8 recurring motifs.
 - Record 4–8 palette colors, composition, lighting, medium, and mood.
 - Record 2–10 must-preserve items and 1–8 source risks.
@@ -40,7 +40,7 @@ User-facing copy must follow the language of the user's brief. Image prompts may
 Hero:
 
 - At least 1200×700, landscape ratio between 1.35 and 1.9.
-- Requested fictional subject remains recognizable when applicable.
+- Requested fictional subjects and explicitly user-named adult public figures remain recognizable when applicable.
 - Copy-safe space matches the selected layout.
 - Banner subjects keep the full face/head and identifying silhouette within the top-safe focal region; focalX/focalY are recorded in the skin spec.
 - No readable source text, fake controls, border, logo, or watermark.
