@@ -86,6 +86,10 @@ export function buildInjectionExpression(payload) {
       document.querySelectorAll('.skin-thread-header-layout').forEach(node => node.classList.remove('skin-thread-header-layout'));
       document.querySelectorAll('.skin-thread-title-row').forEach(node => node.classList.remove('skin-thread-title-row'));
       document.querySelectorAll('.skin-thread-title').forEach(node => node.classList.remove('skin-thread-title'));
+      document.querySelectorAll('.skin-thread-actions').forEach(node => node.classList.remove('skin-thread-actions'));
+      document.querySelectorAll('.skin-window-topbar').forEach(node => node.classList.remove('skin-window-topbar'));
+      document.querySelectorAll('.skin-rail-section-header').forEach(node => node.classList.remove('skin-rail-section-header'));
+      document.querySelectorAll('.skin-rail-action').forEach(node => node.classList.remove('skin-rail-action'));
       document.querySelectorAll('.skin-card-copy').forEach(node => node.remove());
       document.querySelectorAll('[data-skin-generated-aria-label]').forEach(node => {
         node.removeAttribute('aria-label');
@@ -136,6 +140,7 @@ export function buildInjectionExpression(payload) {
       ['修复问题', 'Fix an issue', 'Fix issues'],
     ];
     const newTaskLabels = ['新建任务', 'New task'];
+    const railActionLabels = ['创建文件或站点', '附加文件或连接应用', 'Create file or site', 'Attach files or connect apps'];
     const applyCardCopy = (button, index) => {
       const title = payload.cardTitles?.[index];
       const subtitle = payload.cardSubtitles?.[index];
@@ -187,17 +192,26 @@ export function buildInjectionExpression(payload) {
         const isNewTask = newTaskLabels.some(label => (button.textContent || '').includes(label));
         button.classList.toggle('skin-new-task', isNewTask);
       }
-      document.querySelectorAll('.skin-thread-header, .skin-thread-header-layout, .skin-thread-title-row, .skin-thread-title').forEach(node => {
-        node.classList.remove('skin-thread-header', 'skin-thread-header-layout', 'skin-thread-title-row', 'skin-thread-title');
+      document.querySelectorAll('.skin-thread-header, .skin-thread-header-layout, .skin-thread-title-row, .skin-thread-title, .skin-thread-actions, .skin-window-topbar, .skin-rail-section-header, .skin-rail-action').forEach(node => {
+        node.classList.remove('skin-thread-header', 'skin-thread-header-layout', 'skin-thread-title-row', 'skin-thread-title', 'skin-thread-actions', 'skin-window-topbar', 'skin-rail-section-header', 'skin-rail-action');
       });
+      document.querySelector('[class~="group/application-menu-top-bar"]')?.classList.add('skin-window-topbar');
+      for (const button of document.querySelectorAll('button[aria-label]')) {
+        const label = button.getAttribute('aria-label') || '';
+        if (!railActionLabels.some(candidate => label.includes(candidate))) continue;
+        button.classList.add('skin-rail-action');
+        button.closest('.sticky')?.classList.add('skin-rail-section-header');
+      }
       const threadHeader = shellMain.querySelector(':scope > header.app-header-tint');
       const threadHeaderLayout = threadHeader?.querySelector('.draggable.grid.w-full');
       const threadTitleRow = threadHeaderLayout?.firstElementChild;
       const threadTitle = threadTitleRow?.firstElementChild;
+      const threadActions = threadHeader?.querySelector('.ms-auto');
       threadHeader?.classList.add('skin-thread-header');
       threadHeaderLayout?.classList.add('skin-thread-header-layout');
       threadTitleRow?.classList.add('skin-thread-title-row');
       threadTitle?.classList.add('skin-thread-title');
+      threadActions?.classList.add('skin-thread-actions');
     };
     markNativeControls();
     const scheduler = { timer: null };

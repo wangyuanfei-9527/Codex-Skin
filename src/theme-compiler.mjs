@@ -41,6 +41,8 @@ export function codexNativeTokenCss(palette) {
   --color-token-disabled-foreground: ${hexRgba(p.mutedText, 0.56)};
   --color-token-text-primary: ${p.text};
   --color-token-text-secondary: ${p.mutedText};
+  --color-token-text-tertiary: ${hexRgba(p.text, 0.76)};
+  --color-token-button-tertiary-foreground: ${hexRgba(p.text, 0.90)};
   --color-token-dropdown-background: ${p.surface};
   --color-token-dropdown-foreground: ${p.text};
   --color-token-border: ${hexRgba(p.border, 0.74)};
@@ -52,6 +54,7 @@ export function codexNativeTokenCss(palette) {
   --color-token-bg-primary: ${p.background};
   --color-token-bg-secondary: ${p.surface};
   --color-token-bg-tertiary: ${p.surfaceAlt};
+  --color-token-bg-fog: ${hexRgba(p.surfaceAlt, 0.88)};
   --color-token-editor-background: ${p.background};
   --color-token-editor-foreground: ${p.text};
   --color-token-editor-widget-background: ${p.surface};
@@ -74,10 +77,10 @@ export function codexRuntimePatchCss(design) {
   z-index: 0;
   inset: 47px 0 0;
   pointer-events: none;
-  opacity: ${Math.max(0.16, Math.min(0.30, e.overlayOpacity * 0.52)).toFixed(2)};
+  opacity: ${Math.max(0.34, Math.min(0.48, e.overlayOpacity * 0.95)).toFixed(2)};
   background: url("${BACKGROUND_PLACEHOLDER}") no-repeat ${e.backgroundPosition} / cover;
-  filter: blur(${Math.min(e.blur, 8)}px) saturate(.82) contrast(.96);
-  transform: scale(1.025);
+  filter: blur(${Math.min(e.blur, 3)}px) saturate(.92) contrast(.98);
+  transform: scale(1.012);
 }
 :root.codex-skin-studio-active main.main-surface:not(.skin-home-shell)::after {
   content: "";
@@ -85,46 +88,88 @@ export function codexRuntimePatchCss(design) {
   z-index: 0;
   inset: 47px 0 0;
   pointer-events: none;
-  background: linear-gradient(90deg, ${hexRgba(p.background, 0.88)}, ${hexRgba(p.background, 0.68)} 54%, ${hexRgba(p.surface, 0.54)});
+  background: linear-gradient(90deg, ${hexRgba(p.background, 0.78)} 0%, ${hexRgba(p.background, 0.52)} 42%, ${hexRgba(p.background, 0.28)} 68%, ${hexRgba(p.surface, 0.14)} 100%);
 }
-:root.codex-skin-studio-active main.main-surface > * { position: relative; z-index: 1; }
+:root.codex-skin-studio-active main.main-surface > *:not(header.app-header-tint) { position: relative; z-index: 1; }
 :root.codex-skin-studio-active main.main-surface > header.app-header-tint {
-  background: linear-gradient(90deg, ${hexRgba(p.surface, 0.98)}, ${hexRgba(p.surfaceAlt, 0.94)}) !important;
-  border-bottom: 1px solid ${hexRgba(p.border, 0.72)} !important;
+  position: fixed !important;
+  z-index: 30 !important;
+  background: linear-gradient(90deg, ${hexRgba(p.surface, 0.84)}, ${hexRgba(p.surfaceAlt, 0.76)}) !important;
+  border-bottom: 1px solid ${hexRgba(p.border, 0.44)} !important;
   backdrop-filter: none !important;
 }
 :root.codex-skin-studio-active main.main-surface > header.app-header-tint.skin-thread-header {
   min-height: 48px !important;
   height: 48px !important;
-  box-shadow: 0 8px 22px ${hexRgba(p.background, 0.18)} !important;
+  box-shadow: none !important;
 }
 :root.codex-skin-studio-active .skin-thread-header-layout {
   width: 100% !important;
+  max-width: none !important;
   height: 48px !important;
   margin: 0 !important;
   padding: 0 22px !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 :root.codex-skin-studio-active .skin-thread-title-row {
   gap: 7px !important;
-  color: ${p.text} !important;
+  color: ${hexRgba(p.text, 0.86)} !important;
+  background: transparent !important;
 }
 :root.codex-skin-studio-active .skin-thread-title {
   max-width: min(520px, 55vw) !important;
-  color: ${p.text} !important;
-  font-size: 13px !important;
-  font-weight: 650 !important;
+  color: ${hexRgba(p.text, 0.86)} !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
   letter-spacing: 0.01em !important;
 }
 :root.codex-skin-studio-active .skin-thread-title::before {
+  content: none;
+}
+:root.codex-skin-studio-active .skin-thread-actions {
+  gap: 6px !important;
+}
+:root.codex-skin-studio-active .skin-thread-actions button {
+  color: ${hexRgba(p.text, 0.90)} !important;
+  background: ${hexRgba(p.surfaceAlt, 0.72)} !important;
+  border-color: ${hexRgba(p.border, 0.52)} !important;
+}
+:root.codex-skin-studio-active .skin-thread-actions button svg {
+  color: ${hexRgba(p.text, 0.86)} !important;
+  opacity: 1 !important;
+}
+:root.codex-skin-studio-active .skin-window-topbar {
+  color: ${p.text} !important;
+  background: linear-gradient(90deg, ${hexRgba(p.background, 0.96)}, ${hexRgba(p.surfaceAlt, 0.80)}) !important;
+}
+:root.codex-skin-studio-active .skin-window-topbar::after {
   content: "";
-  display: inline-block;
-  width: 5px;
-  height: 5px;
-  margin-right: 9px;
-  vertical-align: 2px;
-  border-radius: 999px;
-  background: ${p.accent};
-  box-shadow: 0 0 9px ${hexRgba(p.accent, 0.58)};
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  right: 0;
+  width: 152px;
+  height: 36px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, ${hexRgba(p.text, 0.34)} 42%, ${hexRgba(p.text, 0.48)});
+}
+:root.codex-skin-studio-active .skin-rail-section-header {
+  color: ${hexRgba(p.text, 0.90)} !important;
+  background: ${hexRgba(p.surface, 0.92)} !important;
+  border-bottom: 1px solid ${hexRgba(p.border, 0.42)};
+}
+:root.codex-skin-studio-active .skin-rail-section-header button {
+  color: ${hexRgba(p.text, 0.90)} !important;
+}
+:root.codex-skin-studio-active .skin-rail-action {
+  color: ${p.text} !important;
+  background: ${hexRgba(p.accent, 0.14)} !important;
+  border-color: ${hexRgba(p.accent, 0.30)} !important;
+}
+:root.codex-skin-studio-active .skin-rail-action svg {
+  color: ${p.accent} !important;
+  opacity: 1 !important;
 }`;
 }
 

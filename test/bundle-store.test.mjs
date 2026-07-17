@@ -27,6 +27,10 @@ async function fixture() {
 test('runtime patch upgrades historical themes without regeneration', () => {
   const css = codexRuntimePatchCss(sampleSpec());
   assert.match(css, /skin-thread-header-layout/);
+  assert.match(css, /skin-thread-actions/);
+  assert.match(css, /skin-window-topbar/);
+  assert.match(css, /skin-rail-section-header/);
+  assert.match(css, /position: fixed !important/);
   assert.match(css, /CODEX_SKIN_BACKGROUND_DATA_URL/);
 });
 
