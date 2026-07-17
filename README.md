@@ -1,135 +1,124 @@
-# Codex Skin Studio
+<h1 align="center">Codex Skin Studio</h1>
 
-[简体中文](./README.zh-CN.md) · English
+<p align="center"><strong>Turn the characters, colors, and atmosphere you love into a Codex workspace you will actually want to open.</strong></p>
 
-> A local-first Windows theme-creation studio for Codex. Turn a reference image set and a written brief into generated artwork, matching icons, themed copy, and a reversible Codex desktop skin.
+<p align="center">Bring a small set of reference images and a written direction. Get a coherent hero, icon set, palette, and copy pack that carries the same identity from the home screen and sidebar into conversations, settings, menus, and editors. A complete workspace skin—not a wallpaper swap.</p>
 
-[Download the latest portable EXE](https://github.com/wangyuanfei-9527/Codex-Skin/releases/latest)
+<p align="center"><strong><a href="https://github.com/wangyuanfei-9527/Codex-Skin/releases/latest">Download the latest portable Windows app</a></strong> · <a href="./README.zh-CN.md">简体中文</a></p>
 
-![Codex Skin Studio theme applied to the Codex home screen](./docs/images/theme-home.png)
+<p align="center"><code>One portable EXE</code> · <code>No installer</code> · <code>Uses your local Codex</code> · <code>Preview first</code> · <code>Restore anytime</code></p>
 
-## What it does
+![Codex home screen with a generated Miku angel theme](./docs/images/codex-home.jpg)
 
-Codex Skin Studio uses the **Codex CLI already installed and signed in on your computer**. It does not bundle a model, require a separate API key, or send files to a Codex Skin Studio server.
+> This is the theme running in Codex, not a concept mockup. The hero, four icons, palette, and copy were generated from one reference direction. Change the references and brief, and the whole themed experience changes with them.
 
-The workflow is deliberately staged:
+## More than a background image
 
-1. Analyze the subject, character identity, signature traits, palette, composition, lighting, motifs, must-preserve details, and source risks in the reference images.
-2. Combine that evidence with your brief to create a complete skin specification and a prompt for every required visual asset.
-3. Ask your local Codex runtime to generate a 16:10 hero image and a matching 2×2 icon atlas.
-4. Validate image dimensions, schemas, hashes, paths, and CSS scope before a preview can be built.
-5. Apply only a complete bundle, restart Codex, and keep restoration one click away.
+Most themes stop at the easiest surface to screenshot. Codex Skin Studio first identifies what makes your references distinctive—the subject, character identity, signature traits, color, light, composition, and motifs—then designs every asset as one system.
 
-This avoids the common “tinted wallpaper plus generic icons” result: the visual identity is extracted first, all asset prompts are planned together, and only then are images generated and injected.
+- **The theme follows you into real work.** Conversations, code, review, diff, settings, in-app menus, overlays, and editors share the same semantic palette.
+- **The assets are made as a set.** A wide hero and four small-format icons use one visual language; a raw reference crop is never passed off as the finished result.
+- **The words belong to the theme too.** Titles, subtitles, feature cards, composer text, project labels, badges, and signatures can all be rewritten together.
+- **You keep the final say.** Review the complete preview before applying, switch to any saved theme, or return to the original Codex appearance whenever you want.
 
-## Highlights
+### The mood survives past the home screen
 
-- **Portable Windows app** — one EXE, no installer, bundled Node runtime.
-- **Uses your local Codex** — no embedded model and no third-party model service.
-- **Reference-aware generation** — preserves explicitly requested fictional-character identity and signature traits instead of reducing the source to a color palette.
-- **Generated hero and icon set** — the original image is never used as a silent fallback.
-- **Whole-surface theming** — sidebar, header, project/task rows, hero, suggestion cards, composer, dialogs, popovers, settings, review surfaces, code blocks, selection colors, and more.
-- **Generated copy pack** — hero text, project label, card labels, composer placeholder, profile badge, and signature can share the theme language.
-- **Theme library** — every successful generation is retained locally for previewing and switching.
-- **Safe deletion** — the currently applied theme cannot be deleted.
-- **Reversible injection** — restore the original Codex appearance without deleting the theme library.
-- **Fail-closed validation** — missing, irrelevant, truncated, or invalid assets stop the workflow instead of applying a partial skin.
+Opening a task does not drop you back into an unrelated interface. The content canvas, composer, environment panel, surfaces, and contrast all adapt while Codex keeps its familiar layout and workflow.
 
-> **Current scope:** v0.7.7 ships the independent skin workflow. Pet creation remains intentionally separate until it can meet the same quality and validation bar; this release never substitutes a generic placeholder pet.
+![Codex conversation and coding workspace with the generated theme](./docs/images/codex-workspace.jpg)
 
-## Screenshots
+### Even native settings belong to the same system
 
-### Generated visual assets
+The skin is not optimized for one glamorous screenshot. Verified settings, menus, dialogs, review, diff, and editor surfaces inherit the theme while preserving readable contrast for long sessions.
 
-| Generated 16:10 hero | Generated 2×2 icon atlas |
-| --- | --- |
-| ![Generated Miku-inspired hero image](./docs/images/generated-hero.png) | ![Generated matching icon atlas](./docs/images/generated-icons.png) |
+![Codex settings with the generated theme](./docs/images/codex-settings.jpg)
 
-### Applied Codex surfaces
+## Your first theme takes three steps
 
-| Themed home | Native appearance settings |
-| --- | --- |
-| ![Themed Codex home](./docs/images/theme-home.png) | ![Themed appearance settings](./docs/images/appearance-settings.png) |
+1. **Bring the inspiration.** Choose one or more character images, illustrations, palette references, or mood images.
+2. **Describe what must survive.** Call out the subject, mood, composition, copy direction, and the details that must remain recognizable.
+3. **Preview, then apply.** The studio creates the hero, icons, palette, and copy. Generate a preview for review, or apply the complete theme and restart Codex.
 
-The screenshots show a generated Miku-inspired theme used for validation. Artwork, copy, palette, and icons change with the references and brief supplied by the user.
+![Codex Skin Studio creation workflow and live theme preview](./docs/images/studio-create.jpg)
 
-## Requirements
+Generation is not a mystery button. The studio keeps your references, direction, progress, palette, and a Codex-shaped preview visible. A theme can only be applied after its assets, dimensions, schema, hashes, paths, and injection scope pass validation. Missing or invalid output stops the run instead of quietly falling back to something generic.
+
+## Keep every good direction
+
+Every successful generation is added to a local theme library. Revisit and switch themes without generating them again. The theme currently applied to Codex is protected from deletion, and restoring the original appearance never erases your library.
+
+![Local theme library in Codex Skin Studio](./docs/images/studio-library.jpg)
+
+## Get started
+
+### Requirements
 
 - Windows 10 or Windows 11, x64
-- Codex desktop installed
-- Codex CLI installed, available as `codex`, and signed in
-- A Codex account/workspace with the capabilities required by the selected generation flow
+- The Microsoft Store build of Codex desktop installed (the current injection target)
+- Codex CLI installed and signed in; `codex --version` should work in PowerShell
+- A Codex account or workspace with the capabilities required by the selected generation flow
 
-The portable EXE contains the studio runtime and deterministic compiler. It does **not** contain Codex, a model, an API key, or your credentials.
-
-## Quick start
+### Quick start
 
 1. Download `CodexSkinStudio-v0.7.7-Windows-x64.exe` from [Releases](https://github.com/wangyuanfei-9527/Codex-Skin/releases/tag/v0.7.7).
-2. Double-click the EXE. No installation is required.
-3. Add one or more local reference images.
-4. Describe the desired subject, mood, composition, copy direction, and any details that must remain recognizable.
-5. Choose **Generate skin and apply** for the complete flow, or **Generate preview only** to review the bundle first.
-6. Inspect the hero, four generated icons, palette, copy, and Codex preview.
-7. Apply the preview. The studio restarts Codex and injects the validated theme.
+2. Double-click the EXE. There is nothing to install and no separate API key to paste in.
+3. Add your reference images and write the creative direction.
+4. Choose **Generate preview only** to review the result, or **Generate skin and apply** for the complete flow.
+5. Use **Restore original Codex** whenever you want to switch back. Your theme library stays intact.
 
-Use **Theme Library** to load any previous generation, switch themes without regenerating assets, or delete an unused theme. A theme marked as currently in use is protected; apply another theme or restore the original appearance before deleting it.
+**[Download Codex Skin Studio v0.7.7](https://github.com/wangyuanfei-9527/Codex-Skin/releases/tag/v0.7.7)**
 
-## What can be themed
+## Local-first, with a clear data boundary
 
-The v0.7.7 injector covers verified Codex surfaces, including:
-
-- app sidebar, navigation, project groups, task rows, profile area, and new-task action;
-- home header, brand, signature, hero image/crop, title, subtitle, suggestion cards, and generated icons;
-- project selector, composer, placeholder, send control, scroll treatment, selection colors, quotes, and code blocks;
-- conversation, review, diff, settings, menu, popover, dialog, tooltip, and editor surfaces that expose verified Codex design tokens;
-- a responsive decorative image that remains anchored to the live composer when the window is resized.
-
-Native Windows title/menu chrome, unknown controls, the real signed-in username, core navigation labels, credentials, user tasks, plugins, and pet windows are intentionally left alone.
-
-## Privacy and local data
-
-Codex Skin Studio has no backend, analytics, telemetry, upload endpoint, bundled key, or third-party model integration. It stores jobs, generated assets, validated bundles, backups, and state under:
+Codex Skin Studio has no backend, account system, analytics, telemetry, upload endpoint, bundled key, or third-party model service. Jobs, generated assets, bundles, backups, and state are stored under:
 
 ```text
 %LOCALAPPDATA%\CodexSkinStudio
 ```
 
-The app starts your installed `codex` command under your existing authentication. Reference images, prompts, and generation requests **may be transmitted to OpenAI according to your Codex account and workspace policy**. Codex Skin Studio itself does not operate an additional server. Credentials are never opened or copied. See [PRIVACY.md](./PRIVACY.md) for the complete boundary.
+The app launches the `codex` command already installed and authenticated on your computer. Reference images, prompts, and generation requests may be transmitted to OpenAI according to your Codex account and workspace policy. They do not pass through a Codex Skin Studio server—there is no such server—and the app never opens or copies your Codex credentials. See [PRIVACY.md](./PRIVACY.md) for the complete boundary.
 
-## Command-line usage
+## What changes—and what deliberately does not
 
-The desktop app is the recommended interface. The same validated pipeline is also available from the repository:
+The validated theme surface includes the sidebar, navigation, project and task rows, home hero, feature cards, composer, scroll treatment, selections, code blocks, conversations, review, diff, settings, in-app menus, overlays, dialogs, and editor design tokens.
+
+Native Windows title and menu chrome, unknown controls, your real signed-in name, core navigation labels, user tasks, plugins, credentials, and pet windows stay untouched. v0.7.7 focuses on doing the independent skin workflow well; pet creation remains separate rather than shipping a generic placeholder.
+
+<details>
+<summary><strong>Command-line workflow</strong></summary>
+
+The desktop app is the recommended interface. The repository also exposes the same validated pipeline through the CLI:
 
 ```powershell
 node .\bin\codex-skin.mjs doctor
-node .\bin\codex-skin.mjs generate-skin --image C:\path\one.png --requirements "Create a recognizable Miku theme" --output C:\path\bundle
+node .\bin\codex-skin.mjs generate-skin --image C:\path\one.png --requirements "Create a theme that preserves the character's signature traits" --output C:\path\bundle
 node .\bin\codex-skin.mjs validate C:\path\bundle
 node .\bin\codex-skin.mjs apply-skin C:\path\bundle --restart
 node .\bin\codex-skin.mjs restore-skin --restart
 ```
 
-For a current Codex task, the repository also contains the `$build-codex-skin` skill. It follows the same gated workflow and uses image generation before deterministic compilation.
+The repository also includes the `$build-codex-skin` skill for running the same staged workflow inside a Codex task.
 
-## Build from source
+</details>
 
-Prerequisites: Node.js 22+ and the Windows build tools already used by the project.
+<details>
+<summary><strong>Build from source</strong></summary>
+
+You need Node.js 22+, a 64-bit .NET Framework C# compiler, and the corresponding framework assemblies:
 
 ```powershell
 npm run verify
 powershell -ExecutionPolicy Bypass -File .\scripts\build-windows-app.ps1
 ```
 
-The single-file application is written to `dist\CodexSkinStudio.exe`.
+The single-file app is written to `dist\CodexSkinStudio.exe`.
 
-## v0.7.7
+</details>
 
-This release expands theme ownership across native Codex surfaces and makes route changes stable:
+<details>
+<summary><strong>v0.7.7 verification</strong></summary>
 
-- semantic colors now reach native controls, menus, overlays, editors, settings, review, and diff surfaces;
-- theme bindings are restored when Codex replaces the main surface or sidebar during navigation;
-- delayed diff shadow roots receive a bounded retry instead of remaining unthemed;
-- explicitly light preview surfaces and switch knobs retain their intended contrast;
-- 30 automated checks pass, followed by a live visual audit across home, conversation, review, profile menus, and all 19 settings sections.
+This release passes 30 automated checks and was visually audited on the real home, conversation, review, profile-menu, and all 19 settings surfaces.
 
 Portable EXE SHA-256:
 
@@ -137,13 +126,15 @@ Portable EXE SHA-256:
 1B5F0E0F4D7DD948953084827F20951F16F60C3625DD1DADD33BA369220BC29F
 ```
 
+</details>
+
 ## Troubleshooting
 
-- **Local Codex cannot be found:** open PowerShell and run `codex --version`, then sign in before reopening the studio.
-- **Generation stops before preview:** inspect the stage message. Invalid or missing assets intentionally stop the pipeline; there is no low-quality fallback.
-- **An older theme is still visible:** open Theme Library and apply the selected theme again so Codex restarts with the current bundle.
-- **A theme cannot be deleted:** it is currently applied. Switch to another theme or restore the original Codex appearance first.
-- **A Windows-owned area does not change:** native OS chrome and unverified controls are intentionally outside the injection scope.
+- **Local Codex is not found:** run `codex --version` in PowerShell, confirm that you are signed in, then reopen the studio.
+- **Generation stops before preview:** read the stage message. Missing, damaged, or invalid assets intentionally stop the workflow; an incomplete theme is never applied.
+- **An older theme is still visible:** open the Theme Library and apply the selected theme again so Codex restarts with the current bundle.
+- **A theme cannot be deleted:** it is currently in use. Apply another theme or restore the original appearance first.
+- **A Windows-owned area does not change:** native OS surfaces and unverified controls intentionally remain outside the injection boundary.
 
 ## Project documents
 
