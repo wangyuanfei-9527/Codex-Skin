@@ -17,6 +17,7 @@ using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Shell;
 using System.Xml;
 using Microsoft.Win32;
 
@@ -24,8 +25,8 @@ using Microsoft.Win32;
 [assembly: AssemblyDescription("Local-first Codex theme and pet studio")]
 [assembly: AssemblyCompany("Codex Skin Studio contributors")]
 [assembly: AssemblyProduct("Codex Skin Studio")]
-[assembly: AssemblyVersion("0.7.7.0")]
-[assembly: AssemblyFileVersion("0.7.7.0")]
+[assembly: AssemblyVersion("0.7.8.0")]
+[assembly: AssemblyFileVersion("0.7.8.0")]
 
 namespace CodexSkinStudio
 {
@@ -68,17 +69,17 @@ namespace CodexSkinStudio
 
     internal static class RuntimeBootstrap
     {
-        private const string Version = "0.7.7";
+        private const string Version = "0.7.8";
 
         public static RuntimeFiles Ensure()
         {
+            string runtimeHash = ResourceHash("CodexSkinStudio.Runtime.zip");
             string root = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "CodexSkinStudio", "portable-runtime", Version);
+                "CodexSkinStudio", "portable-runtime", Version + "-" + runtimeHash.Substring(0, 12));
             string marker = Path.Combine(root, ".ready");
             string node = Path.Combine(root, "node.exe");
             string cli = Path.Combine(root, "runtime", "bin", "codex-skin.mjs");
-            string runtimeHash = ResourceHash("CodexSkinStudio.Runtime.zip");
             if (!File.Exists(marker) || File.ReadAllText(marker).Trim() != runtimeHash || !File.Exists(node) || !File.Exists(cli))
             {
                 string staging = root + ".stage." + Process.GetCurrentProcess().Id;
@@ -164,6 +165,7 @@ namespace CodexSkinStudio
         private ListBox themeLibraryList;
         private TextBox briefBox;
         private ComboBox presetBox;
+        private ComboBox colorModeBox;
         private Image previewImage;
         private Image petImage;
         private Border previewTint;
@@ -200,9 +202,14 @@ namespace CodexSkinStudio
         private Button libraryApplyButton;
         private Button refreshLibraryButton;
         private Button deleteLibraryButton;
+        private Button studioThemeButton;
+        private Button minimizeButton;
+        private Button maximizeButton;
+        private Button closeButton;
         private Grid flowPanel;
         private Grid libraryPanel;
         private ProgressBar progress;
+        private bool studioDark;
         private readonly List<Border> swatches = new List<Border>();
         private readonly List<Border> previewCards = new List<Border>();
         private readonly List<Border> previewAccents = new List<Border>();
@@ -215,6 +222,7 @@ namespace CodexSkinStudio
             runtime = runtimeFiles;
             Window = LoadShell();
             BindControls();
+            ApplyStudioTheme(ReadStudioTheme());
             BindEvents();
             referenceList.ItemsSource = references;
             themeLibraryList.ItemsSource = themeLibrary;
@@ -227,28 +235,44 @@ namespace CodexSkinStudio
 <Window xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'
         xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'
         Title='Codex Skin Studio' Width='1460' Height='860' MinWidth='1180' MinHeight='720'
-        WindowStartupLocation='CenterScreen' Background='#0E0F11' Foreground='#F5F2EC'
+        WindowStartupLocation='CenterScreen' Background='{DynamicResource AppBackground}' Foreground='{DynamicResource Text}'
         FontFamily='Microsoft YaHei UI' AllowDrop='True'>
   <Window.Resources>
-    <SolidColorBrush x:Key='Ink' Color='#0E0F11'/>
-    <SolidColorBrush x:Key='Panel' Color='#15171A'/>
-    <SolidColorBrush x:Key='Raised' Color='#1D2024'/>
-    <SolidColorBrush x:Key='Border' Color='#30343A'/>
-    <SolidColorBrush x:Key='Text' Color='#F5F2EC'/>
-    <SolidColorBrush x:Key='Muted' Color='#92979F'/>
-    <SolidColorBrush x:Key='Accent' Color='#F6A04D'/>
-    <SolidColorBrush x:Key='AccentHover' Color='#FFB565'/>
-    <SolidColorBrush x:Key='Teal' Color='#77D1BE'/>
+    <SolidColorBrush x:Key='AppBackground' Color='#F7F5F1'/>
+    <SolidColorBrush x:Key='TopBar' Color='#F0EDE7'/>
+    <SolidColorBrush x:Key='Panel' Color='#F2EFE9'/>
+    <SolidColorBrush x:Key='Raised' Color='#FBF9F5'/>
+    <SolidColorBrush x:Key='RaisedHover' Color='#EEE9E1'/>
+    <SolidColorBrush x:Key='InputBackground' Color='#FCFAF6'/>
+    <SolidColorBrush x:Key='Border' Color='#D8D2C8'/>
+    <SolidColorBrush x:Key='Text' Color='#27231F'/>
+    <SolidColorBrush x:Key='Muted' Color='#716B63'/>
+    <SolidColorBrush x:Key='Accent' Color='#D97928'/>
+    <SolidColorBrush x:Key='AccentHover' Color='#C9691D'/>
+    <SolidColorBrush x:Key='AccentText' Color='#FCF7EF'/>
+    <SolidColorBrush x:Key='Teal' Color='#187B70'/>
+    <SolidColorBrush x:Key='StatusBackground' Color='#E7F2EF'/>
+    <SolidColorBrush x:Key='StatusBorder' Color='#BDD8D1'/>
+    <SolidColorBrush x:Key='StatusText' Color='#22685F'/>
+    <SolidColorBrush x:Key='InfoBackground' Color='#EAF4F1'/>
+    <SolidColorBrush x:Key='InfoBorder' Color='#C5DDD7'/>
+    <SolidColorBrush x:Key='InfoText' Color='#2B675F'/>
+    <SolidColorBrush x:Key='Selection' Color='#F5E6D7'/>
+    <SolidColorBrush x:Key='ScrollTrack' Color='#EEEAE3'/>
+    <SolidColorBrush x:Key='ScrollThumb' Color='#B8B1A7'/>
+    <SolidColorBrush x:Key='ScrollThumbHover' Color='#91897E'/>
+    <SolidColorBrush x:Key='Danger' Color='#B84E57'/>
+    <SolidColorBrush x:Key='DangerBorder' Color='#D7A8AC'/>
     <Style TargetType='TextBlock'>
-      <Setter Property='Foreground' Value='{StaticResource Text}'/>
+      <Setter Property='Foreground' Value='{DynamicResource Text}'/>
     </Style>
     <Style x:Key='SectionLabel' TargetType='TextBlock'>
       <Setter Property='FontSize' Value='12'/><Setter Property='FontWeight' Value='SemiBold'/>
-      <Setter Property='Foreground' Value='{StaticResource Muted}'/><Setter Property='Margin' Value='0,0,0,9'/>
+      <Setter Property='Foreground' Value='{DynamicResource Muted}'/><Setter Property='Margin' Value='0,0,0,9'/>
     </Style>
     <Style x:Key='StudioButton' TargetType='Button'>
-      <Setter Property='Foreground' Value='{StaticResource Text}'/><Setter Property='Background' Value='{StaticResource Raised}'/>
-      <Setter Property='BorderBrush' Value='{StaticResource Border}'/><Setter Property='BorderThickness' Value='1'/>
+      <Setter Property='Foreground' Value='{DynamicResource Text}'/><Setter Property='Background' Value='{DynamicResource Raised}'/>
+      <Setter Property='BorderBrush' Value='{DynamicResource Border}'/><Setter Property='BorderThickness' Value='1'/>
       <Setter Property='Padding' Value='15,10'/><Setter Property='FontSize' Value='13'/><Setter Property='FontWeight' Value='SemiBold'/>
       <Setter Property='Cursor' Value='Hand'/><Setter Property='HorizontalContentAlignment' Value='Center'/>
       <Setter Property='Template'>
@@ -258,16 +282,16 @@ namespace CodexSkinStudio
             <ContentPresenter HorizontalAlignment='{TemplateBinding HorizontalContentAlignment}' VerticalAlignment='Center'/>
           </Border>
           <ControlTemplate.Triggers>
-            <Trigger Property='IsMouseOver' Value='True'><Setter TargetName='Chrome' Property='Background' Value='#282C31'/></Trigger>
-            <Trigger Property='IsKeyboardFocused' Value='True'><Setter TargetName='Chrome' Property='BorderBrush' Value='#E6B986'/></Trigger>
+            <Trigger Property='IsMouseOver' Value='True'><Setter TargetName='Chrome' Property='Background' Value='{DynamicResource RaisedHover}'/></Trigger>
+            <Trigger Property='IsKeyboardFocused' Value='True'><Setter TargetName='Chrome' Property='BorderBrush' Value='{DynamicResource Accent}'/></Trigger>
             <Trigger Property='IsEnabled' Value='False'><Setter TargetName='Chrome' Property='Opacity' Value='.42'/></Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate></Setter.Value>
       </Setter>
     </Style>
     <Style x:Key='PrimaryButton' TargetType='Button' BasedOn='{StaticResource StudioButton}'>
-      <Setter Property='Background' Value='{StaticResource Accent}'/><Setter Property='Foreground' Value='#19130D'/>
-      <Setter Property='BorderBrush' Value='{StaticResource Accent}'/><Setter Property='Padding' Value='16,13'/>
+      <Setter Property='Background' Value='{DynamicResource Accent}'/><Setter Property='Foreground' Value='{DynamicResource AccentText}'/>
+      <Setter Property='BorderBrush' Value='{DynamicResource Accent}'/><Setter Property='Padding' Value='16,13'/>
       <Setter Property='Template'>
         <Setter.Value><ControlTemplate TargetType='Button'>
           <Border x:Name='Chrome' Background='{TemplateBinding Background}' BorderBrush='{TemplateBinding BorderBrush}'
@@ -275,70 +299,168 @@ namespace CodexSkinStudio
             <ContentPresenter HorizontalAlignment='Center' VerticalAlignment='Center'/>
           </Border>
           <ControlTemplate.Triggers>
-            <Trigger Property='IsMouseOver' Value='True'><Setter TargetName='Chrome' Property='Background' Value='{StaticResource AccentHover}'/></Trigger>
-            <Trigger Property='IsKeyboardFocused' Value='True'><Setter TargetName='Chrome' Property='BorderBrush' Value='#F4EEF8'/></Trigger>
+            <Trigger Property='IsMouseOver' Value='True'><Setter TargetName='Chrome' Property='Background' Value='{DynamicResource AccentHover}'/></Trigger>
+            <Trigger Property='IsKeyboardFocused' Value='True'><Setter TargetName='Chrome' Property='BorderBrush' Value='{DynamicResource Text}'/></Trigger>
             <Trigger Property='IsEnabled' Value='False'><Setter TargetName='Chrome' Property='Opacity' Value='.42'/></Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate></Setter.Value>
       </Setter>
     </Style>
     <Style TargetType='TextBox'>
-      <Setter Property='Foreground' Value='{StaticResource Text}'/><Setter Property='Background' Value='#1A1C20'/>
-      <Setter Property='BorderBrush' Value='{StaticResource Border}'/><Setter Property='BorderThickness' Value='1'/>
-      <Setter Property='Padding' Value='12'/><Setter Property='CaretBrush' Value='{StaticResource Accent}'/>
+      <Setter Property='Foreground' Value='{DynamicResource Text}'/><Setter Property='Background' Value='{DynamicResource InputBackground}'/>
+      <Setter Property='BorderBrush' Value='{DynamicResource Border}'/><Setter Property='BorderThickness' Value='1'/>
+      <Setter Property='Padding' Value='12'/><Setter Property='CaretBrush' Value='{DynamicResource Accent}'/>
+      <Setter Property='Template'><Setter.Value><ControlTemplate TargetType='TextBox'>
+        <Border x:Name='TextChrome' Background='{TemplateBinding Background}' BorderBrush='{TemplateBinding BorderBrush}' BorderThickness='{TemplateBinding BorderThickness}' CornerRadius='8'>
+          <ScrollViewer x:Name='PART_ContentHost' Margin='{TemplateBinding Padding}'/>
+        </Border>
+        <ControlTemplate.Triggers>
+          <Trigger Property='IsKeyboardFocused' Value='True'><Setter TargetName='TextChrome' Property='BorderBrush' Value='{DynamicResource Accent}'/></Trigger>
+          <Trigger Property='IsEnabled' Value='False'><Setter TargetName='TextChrome' Property='Opacity' Value='.5'/></Trigger>
+        </ControlTemplate.Triggers>
+      </ControlTemplate></Setter.Value></Setter>
     </Style>
     <Style TargetType='ComboBox'>
-      <Setter Property='Foreground' Value='#191B1F'/><Setter Property='Background' Value='#F5F2EC'/>
-      <Setter Property='BorderBrush' Value='{StaticResource Border}'/><Setter Property='BorderThickness' Value='1'/>
-      <Setter Property='Padding' Value='10,7'/><Setter Property='FontSize' Value='12'/>
+      <Setter Property='Foreground' Value='{DynamicResource Text}'/><Setter Property='Background' Value='{DynamicResource InputBackground}'/>
+      <Setter Property='BorderBrush' Value='{DynamicResource Border}'/><Setter Property='BorderThickness' Value='1'/>
+      <Setter Property='Padding' Value='12,8'/><Setter Property='FontSize' Value='12'/><Setter Property='MinHeight' Value='38'/>
+      <Setter Property='MaxDropDownHeight' Value='320'/>
+      <Setter Property='Template'><Setter.Value><ControlTemplate TargetType='ComboBox'>
+        <Grid>
+          <Border x:Name='ComboChrome' Background='{TemplateBinding Background}' BorderBrush='{TemplateBinding BorderBrush}' BorderThickness='{TemplateBinding BorderThickness}' CornerRadius='8'/>
+          <ToggleButton Focusable='False' ClickMode='Press' Background='Transparent' BorderThickness='0'
+                        IsChecked='{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}'>
+            <ToggleButton.Template><ControlTemplate TargetType='ToggleButton'><Border Background='Transparent'/></ControlTemplate></ToggleButton.Template>
+          </ToggleButton>
+          <ContentPresenter Margin='{TemplateBinding Padding}' VerticalAlignment='Center' HorizontalAlignment='Left'
+                            Content='{TemplateBinding SelectionBoxItem}' ContentTemplate='{TemplateBinding SelectionBoxItemTemplate}' IsHitTestVisible='False'/>
+          <Path Data='M 0 0 L 5 5 L 10 0 Z' Fill='{DynamicResource Muted}' Width='10' Height='5' Stretch='Fill' HorizontalAlignment='Right' VerticalAlignment='Center' Margin='0,0,13,0' IsHitTestVisible='False'/>
+          <Popup x:Name='PART_Popup' IsOpen='{TemplateBinding IsDropDownOpen}' Placement='Bottom' AllowsTransparency='True' Focusable='False' PopupAnimation='Fade'>
+            <Border Background='{DynamicResource Raised}' BorderBrush='{DynamicResource Border}' BorderThickness='1' CornerRadius='8' Margin='0,4,0,0' Padding='5' MinWidth='{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}'>
+              <ScrollViewer MaxHeight='{TemplateBinding MaxDropDownHeight}' CanContentScroll='True'><ItemsPresenter/></ScrollViewer>
+            </Border>
+          </Popup>
+        </Grid>
+        <ControlTemplate.Triggers>
+          <Trigger Property='IsMouseOver' Value='True'><Setter TargetName='ComboChrome' Property='Background' Value='{DynamicResource RaisedHover}'/></Trigger>
+          <Trigger Property='IsKeyboardFocusWithin' Value='True'><Setter TargetName='ComboChrome' Property='BorderBrush' Value='{DynamicResource Accent}'/></Trigger>
+          <Trigger Property='IsEnabled' Value='False'><Setter TargetName='ComboChrome' Property='Opacity' Value='.5'/></Trigger>
+        </ControlTemplate.Triggers>
+      </ControlTemplate></Setter.Value></Setter>
     </Style>
     <Style TargetType='ComboBoxItem'>
-      <Setter Property='Foreground' Value='#191B1F'/><Setter Property='Padding' Value='10,7'/>
+      <Setter Property='Foreground' Value='{DynamicResource Text}'/><Setter Property='Padding' Value='11,8'/>
+      <Setter Property='HorizontalContentAlignment' Value='Stretch'/>
+      <Setter Property='Template'><Setter.Value><ControlTemplate TargetType='ComboBoxItem'>
+        <Border x:Name='ItemChrome' Background='Transparent' CornerRadius='6' Padding='{TemplateBinding Padding}'>
+          <ContentPresenter/>
+        </Border>
+        <ControlTemplate.Triggers>
+          <Trigger Property='IsHighlighted' Value='True'><Setter TargetName='ItemChrome' Property='Background' Value='{DynamicResource RaisedHover}'/></Trigger>
+          <Trigger Property='IsSelected' Value='True'><Setter TargetName='ItemChrome' Property='Background' Value='{DynamicResource Selection}'/></Trigger>
+          <Trigger Property='IsEnabled' Value='False'><Setter TargetName='ItemChrome' Property='Opacity' Value='.45'/></Trigger>
+        </ControlTemplate.Triggers>
+      </ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style x:Key='ScrollThumbStyle' TargetType='Thumb'>
+      <Setter Property='Template'><Setter.Value><ControlTemplate TargetType='Thumb'>
+        <Border x:Name='ThumbChrome' Background='{DynamicResource ScrollThumb}' CornerRadius='4' Margin='2'/>
+        <ControlTemplate.Triggers><Trigger Property='IsMouseOver' Value='True'><Setter TargetName='ThumbChrome' Property='Background' Value='{DynamicResource ScrollThumbHover}'/></Trigger></ControlTemplate.Triggers>
+      </ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <ControlTemplate x:Key='VerticalScrollBar' TargetType='ScrollBar'>
+      <Border Background='{DynamicResource ScrollTrack}' CornerRadius='5'>
+        <Track x:Name='PART_Track' IsDirectionReversed='True'>
+          <Track.DecreaseRepeatButton><RepeatButton Command='{x:Static ScrollBar.PageUpCommand}' Opacity='0'/></Track.DecreaseRepeatButton>
+          <Track.Thumb><Thumb Style='{StaticResource ScrollThumbStyle}' MinHeight='28'/></Track.Thumb>
+          <Track.IncreaseRepeatButton><RepeatButton Command='{x:Static ScrollBar.PageDownCommand}' Opacity='0'/></Track.IncreaseRepeatButton>
+        </Track>
+      </Border>
+    </ControlTemplate>
+    <ControlTemplate x:Key='HorizontalScrollBar' TargetType='ScrollBar'>
+      <Border Background='{DynamicResource ScrollTrack}' CornerRadius='5'>
+        <Track x:Name='PART_Track'>
+          <Track.DecreaseRepeatButton><RepeatButton Command='{x:Static ScrollBar.PageLeftCommand}' Opacity='0'/></Track.DecreaseRepeatButton>
+          <Track.Thumb><Thumb Style='{StaticResource ScrollThumbStyle}' MinWidth='28'/></Track.Thumb>
+          <Track.IncreaseRepeatButton><RepeatButton Command='{x:Static ScrollBar.PageRightCommand}' Opacity='0'/></Track.IncreaseRepeatButton>
+        </Track>
+      </Border>
+    </ControlTemplate>
+    <Style TargetType='ScrollBar'>
+      <Setter Property='Width' Value='10'/><Setter Property='Background' Value='Transparent'/><Setter Property='Template' Value='{StaticResource VerticalScrollBar}'/>
+      <Style.Triggers><Trigger Property='Orientation' Value='Horizontal'><Setter Property='Width' Value='Auto'/><Setter Property='Height' Value='10'/><Setter Property='Template' Value='{StaticResource HorizontalScrollBar}'/></Trigger></Style.Triggers>
+    </Style>
+    <Style x:Key='WindowButton' TargetType='Button'>
+      <Setter Property='Foreground' Value='{DynamicResource Text}'/><Setter Property='Background' Value='Transparent'/><Setter Property='BorderThickness' Value='0'/>
+      <Setter Property='Width' Value='42'/><Setter Property='Height' Value='62'/><Setter Property='FontSize' Value='15'/><Setter Property='Cursor' Value='Hand'/>
+      <Setter Property='Template'><Setter.Value><ControlTemplate TargetType='Button'>
+        <Border x:Name='WindowChrome' Background='{TemplateBinding Background}'><ContentPresenter HorizontalAlignment='Center' VerticalAlignment='Center'/></Border>
+        <ControlTemplate.Triggers><Trigger Property='IsMouseOver' Value='True'><Setter TargetName='WindowChrome' Property='Background' Value='{DynamicResource RaisedHover}'/></Trigger></ControlTemplate.Triggers>
+      </ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style x:Key='CloseWindowButton' TargetType='Button' BasedOn='{StaticResource WindowButton}'>
+      <Setter Property='Template'><Setter.Value><ControlTemplate TargetType='Button'>
+        <Border x:Name='WindowChrome' Background='{TemplateBinding Background}'><ContentPresenter HorizontalAlignment='Center' VerticalAlignment='Center'/></Border>
+        <ControlTemplate.Triggers><Trigger Property='IsMouseOver' Value='True'><Setter TargetName='WindowChrome' Property='Background' Value='#C94F55'/><Setter Property='Foreground' Value='#FFF7F1'/></Trigger></ControlTemplate.Triggers>
+      </ControlTemplate></Setter.Value></Setter>
     </Style>
   </Window.Resources>
   <Grid>
     <Grid.RowDefinitions><RowDefinition Height='62'/><RowDefinition Height='*'/><RowDefinition Height='34'/></Grid.RowDefinitions>
-    <Border Grid.Row='0' Background='#111316' BorderBrush='{StaticResource Border}' BorderThickness='0,0,0,1'>
-      <Grid Margin='20,0'><Grid.ColumnDefinitions><ColumnDefinition Width='*'/><ColumnDefinition Width='Auto'/></Grid.ColumnDefinitions>
+    <Border Grid.Row='0' Background='{DynamicResource TopBar}' BorderBrush='{DynamicResource Border}' BorderThickness='0,0,0,1'>
+      <Grid Margin='20,0,0,0'><Grid.ColumnDefinitions><ColumnDefinition Width='*'/><ColumnDefinition Width='Auto'/><ColumnDefinition Width='Auto'/><ColumnDefinition Width='Auto'/></Grid.ColumnDefinitions>
         <StackPanel Orientation='Horizontal' VerticalAlignment='Center'>
-          <Border Width='34' Height='34' CornerRadius='5' BorderBrush='{StaticResource Accent}' BorderThickness='1' Background='#191B1F' Margin='0,0,12,0'>
-            <TextBlock Text='CS' Foreground='{StaticResource Accent}' FontFamily='Consolas' FontWeight='Bold' FontSize='12' HorizontalAlignment='Center' VerticalAlignment='Center'/>
-          </Border>
           <StackPanel VerticalAlignment='Center'>
-            <TextBlock Text='CODEX SKIN STUDIO' FontFamily='Consolas' FontSize='14' FontWeight='Bold'/>
-            <TextBlock Text='主题创作工作室  /  SKIN 01' FontSize='10' Foreground='{StaticResource Muted}' Margin='0,3,0,0'/>
+            <TextBlock Text='Codex Skin Studio' FontSize='15' FontWeight='SemiBold'/>
+            <TextBlock Text='本地主题创作工作台' FontSize='10.5' Foreground='{DynamicResource Muted}' Margin='0,3,0,0'/>
           </StackPanel>
         </StackPanel>
-        <Border Grid.Column='1' Background='#202A2A' BorderBrush='#34534F' BorderThickness='1' CornerRadius='13' Padding='11,5' VerticalAlignment='Center'>
-          <StackPanel Orientation='Horizontal'><Ellipse Width='7' Height='7' Fill='{StaticResource Teal}' Margin='0,0,7,0'/><TextBlock x:Name='RuntimeText' Text='正在检查本地 Codex' FontSize='11' Foreground='#BFE9E2'/></StackPanel>
+        <Border Grid.Column='1' Background='{DynamicResource StatusBackground}' BorderBrush='{DynamicResource StatusBorder}' BorderThickness='1' CornerRadius='14' Padding='11,6' VerticalAlignment='Center'>
+          <StackPanel Orientation='Horizontal'><Ellipse Width='7' Height='7' Fill='{DynamicResource Teal}' Margin='0,0,7,0'/><TextBlock x:Name='RuntimeText' Text='正在检查本地 Codex' FontSize='11' Foreground='{DynamicResource StatusText}'/></StackPanel>
         </Border>
+        <Button x:Name='StudioThemeButton' Grid.Column='2' Content='☾  暗色模式' Style='{StaticResource StudioButton}' Padding='11,7' Margin='12,0' VerticalAlignment='Center' FontSize='11.5'/>
+        <StackPanel Grid.Column='3' Orientation='Horizontal'>
+          <Button x:Name='MinimizeButton' Content='—' ToolTip='最小化' Style='{StaticResource WindowButton}'/>
+          <Button x:Name='MaximizeButton' Content='□' ToolTip='最大化' Style='{StaticResource WindowButton}'/>
+          <Button x:Name='CloseButton' Content='×' ToolTip='关闭' Style='{StaticResource CloseWindowButton}'/>
+        </StackPanel>
       </Grid>
     </Border>
 
     <Grid Grid.Row='1'>
       <Grid.ColumnDefinitions><ColumnDefinition Width='294'/><ColumnDefinition Width='*'/><ColumnDefinition Width='254'/></Grid.ColumnDefinitions>
-      <Border Grid.Column='0' Background='{StaticResource Panel}' BorderBrush='{StaticResource Border}' BorderThickness='0,0,1,0'>
+      <Border Grid.Column='0' Background='{DynamicResource Panel}' BorderBrush='{DynamicResource Border}' BorderThickness='0,0,1,0'>
         <ScrollViewer VerticalScrollBarVisibility='Auto'><StackPanel Margin='19,20,19,22'>
           <TextBlock Text='01  REFERENCE / 灵感素材' Style='{StaticResource SectionLabel}' FontFamily='Consolas'/>
-          <Border x:Name='DropZone' Height='108' CornerRadius='10' Background='#1A1C20' BorderBrush='#3B4047' BorderThickness='1' Margin='0,0,0,12'>
+          <Border x:Name='DropZone' Height='108' CornerRadius='10' Background='{DynamicResource Raised}' BorderBrush='{DynamicResource Border}' BorderThickness='1' Margin='0,0,0,12'>
             <Grid><StackPanel VerticalAlignment='Center' HorizontalAlignment='Center'>
               <TextBlock Text='拖入参考图片' FontSize='14' FontWeight='SemiBold' HorizontalAlignment='Center'/>
-              <TextBlock Text='PNG、JPEG 或 WebP，最多 32 张' FontSize='11' Foreground='{StaticResource Muted}' Margin='0,5,0,10' HorizontalAlignment='Center'/>
+              <TextBlock Text='PNG、JPEG 或 WebP，最多 32 张' FontSize='11' Foreground='{DynamicResource Muted}' Margin='0,5,0,10' HorizontalAlignment='Center'/>
               <Button x:Name='AddImagesButton' Content='选择图片' Style='{StaticResource StudioButton}' Padding='13,6'/>
             </StackPanel></Grid>
           </Border>
           <Grid Margin='0,0,0,8'><Grid.ColumnDefinitions><ColumnDefinition Width='*'/><ColumnDefinition Width='Auto'/></Grid.ColumnDefinitions>
-            <TextBlock Text='已选素材' FontSize='12' Foreground='{StaticResource Muted}' VerticalAlignment='Center'/>
+            <TextBlock Text='已选素材' FontSize='12' Foreground='{DynamicResource Muted}' VerticalAlignment='Center'/>
             <Button x:Name='ClearImagesButton' Grid.Column='1' Content='清空' Style='{StaticResource StudioButton}' Padding='9,4' FontSize='11'/>
           </Grid>
           <ListBox x:Name='ReferenceList' Height='142' Background='Transparent' BorderThickness='0' ScrollViewer.HorizontalScrollBarVisibility='Disabled' Margin='0,0,0,20'>
+            <ListBox.ItemContainerStyle><Style TargetType='ListBoxItem'>
+              <Setter Property='HorizontalContentAlignment' Value='Stretch'/><Setter Property='Padding' Value='0'/><Setter Property='Margin' Value='0,0,0,6'/>
+              <Setter Property='Template'><Setter.Value><ControlTemplate TargetType='ListBoxItem'>
+                <Border x:Name='ReferenceRow' Background='Transparent' BorderBrush='Transparent' BorderThickness='1' CornerRadius='8'><ContentPresenter/></Border>
+                <ControlTemplate.Triggers>
+                  <Trigger Property='IsMouseOver' Value='True'><Setter TargetName='ReferenceRow' Property='Background' Value='{DynamicResource RaisedHover}'/></Trigger>
+                  <Trigger Property='IsSelected' Value='True'><Setter TargetName='ReferenceRow' Property='Background' Value='{DynamicResource Selection}'/><Setter TargetName='ReferenceRow' Property='BorderBrush' Value='{DynamicResource Accent}'/></Trigger>
+                </ControlTemplate.Triggers>
+              </ControlTemplate></Setter.Value></Setter>
+            </Style></ListBox.ItemContainerStyle>
             <ListBox.ItemTemplate><DataTemplate>
-              <Border Background='#1A1C20' BorderBrush='#292D32' BorderThickness='1' CornerRadius='7' Padding='7' Margin='0,0,0,6'>
+              <Border Background='{DynamicResource Raised}' BorderBrush='{DynamicResource Border}' BorderThickness='1' CornerRadius='7' Padding='7'>
                 <Grid><Grid.ColumnDefinitions><ColumnDefinition Width='42'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions>
                   <Border Width='36' Height='36' CornerRadius='6' ClipToBounds='True'><Image Source='{Binding Thumbnail}' Stretch='UniformToFill'/></Border>
                   <StackPanel Grid.Column='1' Margin='9,0,0,0' VerticalAlignment='Center'>
                     <TextBlock Text='{Binding Name}' FontSize='12' TextTrimming='CharacterEllipsis'/>
-                    <TextBlock Text='本地图片' FontSize='10' Foreground='{StaticResource Muted}' Margin='0,2,0,0'/>
+                    <TextBlock Text='本地图片' FontSize='10' Foreground='{DynamicResource Muted}' Margin='0,2,0,0'/>
                   </StackPanel>
                 </Grid>
               </Border>
@@ -346,7 +468,7 @@ namespace CodexSkinStudio
           </ListBox>
 
           <TextBlock Text='02  DIRECTION / 创作需求' Style='{StaticResource SectionLabel}' FontFamily='Consolas'/>
-          <TextBlock Text='风格导演（内置提示词）' FontSize='11' Foreground='{StaticResource Muted}' Margin='0,0,0,7'/>
+          <TextBlock Text='风格导演（内置提示词）' FontSize='11' Foreground='{DynamicResource Muted}' Margin='0,0,0,7'/>
           <ComboBox x:Name='PresetBox' SelectedIndex='0' Margin='0,0,0,8' AutomationProperties.Name='内置风格导演'>
             <ComboBoxItem Content='自动判断 · 从图片提炼原创方向'/>
             <ComboBoxItem Content='清透收藏 · 纸感与植物留白'/>
@@ -357,11 +479,17 @@ namespace CodexSkinStudio
             <ComboBoxItem Content='好运开工 · 红金与东方吉祥纹样'/>
             <ComboBoxItem Content='音乐彩光 · 青粉节奏与星光'/>
           </ComboBox>
-          <TextBlock Text='主视觉、版式、侧栏、卡片、输入区和文案会作为同一套系统生成。' FontSize='9.5' Foreground='#7F858D' TextWrapping='Wrap' Margin='2,0,2,9'/>
+          <TextBlock Text='生成主题明暗' FontSize='11' Foreground='{DynamicResource Muted}' Margin='0,3,0,7'/>
+          <ComboBox x:Name='ColorModeBox' SelectedIndex='0' Margin='0,0,0,8' AutomationProperties.Name='界面明暗偏好'>
+            <ComboBoxItem Content='自动 · 跟随参考图与需求'/>
+            <ComboBoxItem Content='明亮 · 浅色界面与深色正文'/>
+            <ComboBoxItem Content='暗色 · 深色界面与浅色正文'/>
+          </ComboBox>
+          <TextBlock Text='这里控制生成出来的 Codex 主题，顶部按钮控制工作台自身外观。' FontSize='9.5' Foreground='{DynamicResource Muted}' TextWrapping='Wrap' Margin='2,0,2,9'/>
           <TextBox x:Name='BriefBox' Height='124' AcceptsReturn='True' TextWrapping='Wrap' VerticalScrollBarVisibility='Auto'
                    Text='以参考图片中的主体和核心元素为主题，保留可识别虚构角色的标志特征。先生成适合 Codex 的横版主视觉与统一图标，再设计侧栏、卡片、输入区和主题文案。整体适合长时间使用。'/>
-          <Border Background='#15201E' BorderBrush='#2B4842' BorderThickness='1' CornerRadius='8' Padding='11' Margin='0,13,0,0'>
-            <TextBlock Text='当前流程只生成皮肤，不会读取、安装或修改 ~/.codex/pets。图片通过你的本地 Codex 登录处理。' FontSize='10.5' Foreground='#A8D3CB' TextWrapping='Wrap' LineHeight='17'/>
+          <Border Background='{DynamicResource InfoBackground}' BorderBrush='{DynamicResource InfoBorder}' BorderThickness='1' CornerRadius='8' Padding='11' Margin='0,13,0,0'>
+            <TextBlock Text='当前流程只生成皮肤，不会读取、安装或修改 ~/.codex/pets。图片通过你的本地 Codex 登录处理。' FontSize='10.5' Foreground='{DynamicResource InfoText}' TextWrapping='Wrap' LineHeight='17'/>
           </Border>
         </StackPanel></ScrollViewer>
       </Border>
@@ -369,9 +497,9 @@ namespace CodexSkinStudio
       <Grid Grid.Column='1' Margin='22,18'>
         <Grid.RowDefinitions><RowDefinition Height='Auto'/><RowDefinition Height='*'/><RowDefinition Height='68'/></Grid.RowDefinitions>
         <Grid Grid.Row='0' Margin='2,0,2,14'><Grid.ColumnDefinitions><ColumnDefinition Width='*'/><ColumnDefinition Width='Auto'/></Grid.ColumnDefinitions>
-          <StackPanel><TextBlock Text='COMPOSITION STAGE' FontFamily='Consolas' FontSize='9.5' Foreground='{StaticResource Accent}'/><TextBlock x:Name='PreviewTitle' Text='等待灵感' FontSize='24' FontWeight='SemiBold' Margin='0,4,0,0'/><TextBlock x:Name='PreviewSubtitle' Text='加入图片后，这里会成为你的主题画布。' FontSize='11' Foreground='{StaticResource Muted}' Margin='0,4,0,0'/></StackPanel>
-          <Border Grid.Column='1' CornerRadius='13' Background='#24202B' BorderBrush='{StaticResource Border}' BorderThickness='1' Padding='10,5' VerticalAlignment='Center'>
-            <TextBlock x:Name='BundleText' Text='尚未生成' FontSize='11' Foreground='{StaticResource Muted}'/>
+          <StackPanel><TextBlock Text='COMPOSITION STAGE' FontFamily='Consolas' FontSize='9.5' Foreground='{DynamicResource Accent}'/><TextBlock x:Name='PreviewTitle' Text='等待灵感' FontSize='24' FontWeight='SemiBold' Margin='0,4,0,0'/><TextBlock x:Name='PreviewSubtitle' Text='加入图片后，这里会成为你的主题画布。' FontSize='11' Foreground='{DynamicResource Muted}' Margin='0,4,0,0'/></StackPanel>
+          <Border Grid.Column='1' CornerRadius='13' Background='{DynamicResource Selection}' BorderBrush='{DynamicResource Border}' BorderThickness='1' Padding='10,5' VerticalAlignment='Center'>
+            <TextBlock x:Name='BundleText' Text='尚未生成' FontSize='11' Foreground='{DynamicResource Muted}'/>
           </Border>
         </Grid>
 
@@ -421,10 +549,10 @@ namespace CodexSkinStudio
                   </Grid>
                 </Border>
                 <UniformGrid Grid.Row='2' Columns='4' Margin='0,8,0,8'>
-                  <Border x:Name='MockCard1' Background='#FFF8FA' BorderBrush='#E2D5DD' BorderThickness='1' CornerRadius='8' Margin='0,0,5,0' Padding='8'><StackPanel VerticalAlignment='Center'><Border x:Name='MockAccent1' Width='30' Height='30' CornerRadius='15' Background='#F1A3B7' HorizontalAlignment='Center' ClipToBounds='True'><Image x:Name='MockIcon1' Stretch='UniformToFill'/></Border><TextBlock x:Name='MockCardTitle1' Text='探索并理解代码' FontSize='8.5' FontWeight='SemiBold' HorizontalAlignment='Center' Margin='0,6,0,0'/><TextBlock x:Name='MockCardSubtitle1' Text='快速读懂结构与逻辑' FontSize='7' Opacity='.72' HorizontalAlignment='Center' Margin='0,3,0,0'/></StackPanel></Border>
-                  <Border x:Name='MockCard2' Background='#FFF8FA' BorderBrush='#E2D5DD' BorderThickness='1' CornerRadius='8' Margin='2.5,0' Padding='8'><StackPanel VerticalAlignment='Center'><Border x:Name='MockAccent2' Width='30' Height='30' CornerRadius='15' Background='#F1A3B7' HorizontalAlignment='Center' ClipToBounds='True'><Image x:Name='MockIcon2' Stretch='UniformToFill'/></Border><TextBlock x:Name='MockCardTitle2' Text='构建新功能' FontSize='8.5' FontWeight='SemiBold' HorizontalAlignment='Center' Margin='0,6,0,0'/><TextBlock x:Name='MockCardSubtitle2' Text='把灵感稳稳变成实现' FontSize='7' Opacity='.72' HorizontalAlignment='Center' Margin='0,3,0,0'/></StackPanel></Border>
-                  <Border x:Name='MockCard3' Background='#FFF8FA' BorderBrush='#E2D5DD' BorderThickness='1' CornerRadius='8' Margin='2.5,0' Padding='8'><StackPanel VerticalAlignment='Center'><Border x:Name='MockAccent3' Width='30' Height='30' CornerRadius='15' Background='#F1A3B7' HorizontalAlignment='Center' ClipToBounds='True'><Image x:Name='MockIcon3' Stretch='UniformToFill'/></Border><TextBlock x:Name='MockCardTitle3' Text='审查与验证' FontSize='8.5' FontWeight='SemiBold' HorizontalAlignment='Center' Margin='0,6,0,0'/><TextBlock x:Name='MockCardSubtitle3' Text='检查质量与边界' FontSize='7' Opacity='.72' HorizontalAlignment='Center' Margin='0,3,0,0'/></StackPanel></Border>
-                  <Border x:Name='MockCard4' Background='#FFF8FA' BorderBrush='#E2D5DD' BorderThickness='1' CornerRadius='8' Margin='5,0,0,0' Padding='8'><StackPanel VerticalAlignment='Center'><Border x:Name='MockAccent4' Width='30' Height='30' CornerRadius='15' Background='#F1A3B7' HorizontalAlignment='Center' ClipToBounds='True'><Image x:Name='MockIcon4' Stretch='UniformToFill'/></Border><TextBlock x:Name='MockCardTitle4' Text='修复问题' FontSize='8.5' FontWeight='SemiBold' HorizontalAlignment='Center' Margin='0,6,0,0'/><TextBlock x:Name='MockCardSubtitle4' Text='定位根因并修复' FontSize='7' Opacity='.72' HorizontalAlignment='Center' Margin='0,3,0,0'/></StackPanel></Border>
+                  <Border x:Name='MockCard1' Background='#FFF8FA' BorderBrush='#E2D5DD' BorderThickness='1' CornerRadius='8' Margin='0,0,5,0' Padding='8'><StackPanel VerticalAlignment='Center'><Border x:Name='MockAccent1' Width='30' Height='30' CornerRadius='15' Background='#F1A3B7' HorizontalAlignment='Center' ClipToBounds='True' Visibility='Collapsed'><Image x:Name='MockIcon1' Stretch='UniformToFill'/></Border><TextBlock x:Name='MockCardTitle1' Text='探索并理解代码' FontSize='8.5' FontWeight='SemiBold' HorizontalAlignment='Center'/><TextBlock x:Name='MockCardSubtitle1' Text='快速读懂结构与逻辑' FontSize='7' Opacity='.72' HorizontalAlignment='Center' Margin='0,3,0,0'/></StackPanel></Border>
+                  <Border x:Name='MockCard2' Background='#FFF8FA' BorderBrush='#E2D5DD' BorderThickness='1' CornerRadius='8' Margin='2.5,0' Padding='8'><StackPanel VerticalAlignment='Center'><Border x:Name='MockAccent2' Width='30' Height='30' CornerRadius='15' Background='#F1A3B7' HorizontalAlignment='Center' ClipToBounds='True' Visibility='Collapsed'><Image x:Name='MockIcon2' Stretch='UniformToFill'/></Border><TextBlock x:Name='MockCardTitle2' Text='构建新功能' FontSize='8.5' FontWeight='SemiBold' HorizontalAlignment='Center'/><TextBlock x:Name='MockCardSubtitle2' Text='把灵感稳稳变成实现' FontSize='7' Opacity='.72' HorizontalAlignment='Center' Margin='0,3,0,0'/></StackPanel></Border>
+                  <Border x:Name='MockCard3' Background='#FFF8FA' BorderBrush='#E2D5DD' BorderThickness='1' CornerRadius='8' Margin='2.5,0' Padding='8'><StackPanel VerticalAlignment='Center'><Border x:Name='MockAccent3' Width='30' Height='30' CornerRadius='15' Background='#F1A3B7' HorizontalAlignment='Center' ClipToBounds='True' Visibility='Collapsed'><Image x:Name='MockIcon3' Stretch='UniformToFill'/></Border><TextBlock x:Name='MockCardTitle3' Text='审查与验证' FontSize='8.5' FontWeight='SemiBold' HorizontalAlignment='Center'/><TextBlock x:Name='MockCardSubtitle3' Text='检查质量与边界' FontSize='7' Opacity='.72' HorizontalAlignment='Center' Margin='0,3,0,0'/></StackPanel></Border>
+                  <Border x:Name='MockCard4' Background='#FFF8FA' BorderBrush='#E2D5DD' BorderThickness='1' CornerRadius='8' Margin='5,0,0,0' Padding='8'><StackPanel VerticalAlignment='Center'><Border x:Name='MockAccent4' Width='30' Height='30' CornerRadius='15' Background='#F1A3B7' HorizontalAlignment='Center' ClipToBounds='True' Visibility='Collapsed'><Image x:Name='MockIcon4' Stretch='UniformToFill'/></Border><TextBlock x:Name='MockCardTitle4' Text='修复问题' FontSize='8.5' FontWeight='SemiBold' HorizontalAlignment='Center'/><TextBlock x:Name='MockCardSubtitle4' Text='定位根因并修复' FontSize='7' Opacity='.72' HorizontalAlignment='Center' Margin='0,3,0,0'/></StackPanel></Border>
                 </UniformGrid>
                 <Border x:Name='MockComposer' Grid.Row='3' Background='#FFFAFC' BorderBrush='#DFD2DA' BorderThickness='1' CornerRadius='12' Padding='13,9'>
                   <Grid><Grid.ColumnDefinitions><ColumnDefinition Width='*'/><ColumnDefinition Width='Auto'/></Grid.ColumnDefinitions><StackPanel><TextBlock x:Name='MockComposerPlaceholder' Text='和 Codex 一起构建什么？' FontSize='10.5' Opacity='.65'/><TextBlock Text='＋   完全访问     ♡' FontSize='8.5' Margin='0,9,0,0' Opacity='.62'/></StackPanel><Border x:Name='MockAccent5' Grid.Column='1' Width='31' Height='31' CornerRadius='16' Background='#E987A3' VerticalAlignment='Center'><TextBlock Text='↑' FontSize='15' FontWeight='Bold' HorizontalAlignment='Center' VerticalAlignment='Center'/></Border></Grid>
@@ -442,33 +570,33 @@ namespace CodexSkinStudio
         </Border>
 
         <Grid Grid.Row='2' Margin='2,15,2,0'><Grid.ColumnDefinitions><ColumnDefinition Width='*'/><ColumnDefinition Width='Auto'/></Grid.ColumnDefinitions>
-          <StackPanel><TextBlock Text='主题色谱' FontSize='11' Foreground='{StaticResource Muted}' Margin='0,0,0,9'/>
+          <StackPanel><TextBlock Text='主题色谱' FontSize='11' Foreground='{DynamicResource Muted}' Margin='0,0,0,9'/>
             <StackPanel Orientation='Horizontal'>
               <Border x:Name='Swatch1' Width='28' Height='28' CornerRadius='8' Background='#15131A' Margin='0,0,8,0'/><Border x:Name='Swatch2' Width='28' Height='28' CornerRadius='8' Background='#27222E' Margin='0,0,8,0'/><Border x:Name='Swatch3' Width='28' Height='28' CornerRadius='8' Background='#F4EEF8' Margin='0,0,8,0'/><Border x:Name='Swatch4' Width='28' Height='28' CornerRadius='8' Background='#F28B6D' Margin='0,0,8,0'/><Border x:Name='Swatch5' Width='28' Height='28' CornerRadius='8' Background='#75CFC2' Margin='0,0,8,0'/><Border x:Name='Swatch6' Width='28' Height='28' CornerRadius='8' Background='#3C3545'/>
             </StackPanel>
           </StackPanel>
-          <TextBlock Grid.Column='1' Text='结构化本地预览  /  生成后按真实布局更新' FontFamily='Consolas' FontSize='9' Foreground='{StaticResource Muted}' VerticalAlignment='Bottom' Margin='0,0,0,4'/>
+          <TextBlock Grid.Column='1' Text='结构化本地预览  /  生成后按真实布局更新' FontFamily='Consolas' FontSize='9' Foreground='{DynamicResource Muted}' VerticalAlignment='Bottom' Margin='0,0,0,4'/>
         </Grid>
       </Grid>
 
-      <Border Grid.Column='2' Background='{StaticResource Panel}' BorderBrush='{StaticResource Border}' BorderThickness='1,0,0,0'>
+      <Border Grid.Column='2' Background='{DynamicResource Panel}' BorderBrush='{DynamicResource Border}' BorderThickness='1,0,0,0'>
         <Grid Margin='16,16'><Grid.RowDefinitions><RowDefinition Height='Auto'/><RowDefinition Height='*'/></Grid.RowDefinitions>
           <UniformGrid Columns='2'>
-            <Button x:Name='FlowModeButton' Content='创作流程' Style='{StaticResource StudioButton}' Padding='8,7' Margin='0,0,4,0' Background='#282C31' BorderBrush='{StaticResource Accent}'/>
+            <Button x:Name='FlowModeButton' Content='创作流程' Style='{StaticResource StudioButton}' Padding='8,7' Margin='0,0,4,0' Background='{DynamicResource Selection}' BorderBrush='{DynamicResource Accent}'/>
             <Button x:Name='LibraryModeButton' Content='主题库' Style='{StaticResource StudioButton}' Padding='8,7' Margin='4,0,0,0'/>
           </UniformGrid>
 
           <Grid Grid.Row='1'>
             <Grid x:Name='FlowPanel' Margin='3,18,3,4'><Grid.RowDefinitions><RowDefinition Height='Auto'/><RowDefinition Height='*'/><RowDefinition Height='Auto'/></Grid.RowDefinitions>
-              <StackPanel><TextBlock Text='OUTPUT / 皮肤流程' FontFamily='Consolas' FontSize='14' FontWeight='Bold'/><TextBlock Text='每次生成都会自动进入主题库。' FontSize='10.5' Foreground='{StaticResource Muted}' Margin='0,6,0,20'/>
-                <Grid Margin='0,0,0,14'><Grid.ColumnDefinitions><ColumnDefinition Width='30'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions><Border Width='24' Height='24' CornerRadius='12' Background='#282C31'><TextBlock Text='1' HorizontalAlignment='Center' VerticalAlignment='Center' FontSize='11'/></Border><StackPanel Grid.Column='1'><TextBlock Text='提取参考图核心元素' FontSize='12.5' FontWeight='SemiBold'/><TextBlock x:Name='StepOne' Text='等待图片和需求' FontSize='10' Foreground='{StaticResource Muted}' Margin='0,3,0,0' TextWrapping='Wrap'/></StackPanel></Grid>
-                <Grid Margin='0,0,0,14'><Grid.ColumnDefinitions><ColumnDefinition Width='30'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions><Border Width='24' Height='24' CornerRadius='12' Background='#282C31'><TextBlock Text='2' HorizontalAlignment='Center' VerticalAlignment='Center' FontSize='11'/></Border><StackPanel Grid.Column='1'><TextBlock Text='生成主题与提示词包' FontSize='12.5' FontWeight='SemiBold'/><TextBlock x:Name='StepTwo' Text='等待核心元素提取' FontSize='10' Foreground='{StaticResource Muted}' Margin='0,3,0,0' TextWrapping='Wrap'/></StackPanel></Grid>
-                <Grid Margin='0,0,0,14'><Grid.ColumnDefinitions><ColumnDefinition Width='30'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions><Border Width='24' Height='24' CornerRadius='12' Background='#282C31'><TextBlock Text='3' HorizontalAlignment='Center' VerticalAlignment='Center' FontSize='11'/></Border><StackPanel Grid.Column='1'><TextBlock Text='生成并校验视觉资产' FontSize='12.5' FontWeight='SemiBold'/><TextBlock x:Name='StepThree' Text='主视觉与四枚主题图标' FontSize='10' Foreground='{StaticResource Muted}' Margin='0,3,0,0' TextWrapping='Wrap'/></StackPanel></Grid>
-                <Grid><Grid.ColumnDefinitions><ColumnDefinition Width='30'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions><Border Width='24' Height='24' CornerRadius='12' Background='#282C31'><TextBlock Text='4' HorizontalAlignment='Center' VerticalAlignment='Center' FontSize='11'/></Border><StackPanel Grid.Column='1'><TextBlock Text='编译、预览与应用' FontSize='12.5' FontWeight='SemiBold'/><TextBlock x:Name='StepFour' Text='预览通过后才注入 Codex' FontSize='10' Foreground='{StaticResource Muted}' Margin='0,3,0,0' TextWrapping='Wrap'/></StackPanel></Grid>
+              <StackPanel><TextBlock Text='OUTPUT / 皮肤流程' FontFamily='Consolas' FontSize='14' FontWeight='Bold'/><TextBlock Text='每次生成都会自动进入主题库。' FontSize='10.5' Foreground='{DynamicResource Muted}' Margin='0,6,0,20'/>
+                <Grid Margin='0,0,0,14'><Grid.ColumnDefinitions><ColumnDefinition Width='30'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions><Border Width='24' Height='24' CornerRadius='12' Background='{DynamicResource RaisedHover}'><TextBlock Text='1' HorizontalAlignment='Center' VerticalAlignment='Center' FontSize='11'/></Border><StackPanel Grid.Column='1'><TextBlock Text='提取参考图核心元素' FontSize='12.5' FontWeight='SemiBold'/><TextBlock x:Name='StepOne' Text='等待图片和需求' FontSize='10' Foreground='{DynamicResource Muted}' Margin='0,3,0,0' TextWrapping='Wrap'/></StackPanel></Grid>
+                <Grid Margin='0,0,0,14'><Grid.ColumnDefinitions><ColumnDefinition Width='30'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions><Border Width='24' Height='24' CornerRadius='12' Background='{DynamicResource RaisedHover}'><TextBlock Text='2' HorizontalAlignment='Center' VerticalAlignment='Center' FontSize='11'/></Border><StackPanel Grid.Column='1'><TextBlock Text='生成主题与提示词包' FontSize='12.5' FontWeight='SemiBold'/><TextBlock x:Name='StepTwo' Text='等待核心元素提取' FontSize='10' Foreground='{DynamicResource Muted}' Margin='0,3,0,0' TextWrapping='Wrap'/></StackPanel></Grid>
+                <Grid Margin='0,0,0,14'><Grid.ColumnDefinitions><ColumnDefinition Width='30'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions><Border Width='24' Height='24' CornerRadius='12' Background='{DynamicResource RaisedHover}'><TextBlock Text='3' HorizontalAlignment='Center' VerticalAlignment='Center' FontSize='11'/></Border><StackPanel Grid.Column='1'><TextBlock Text='生成并校验视觉资产' FontSize='12.5' FontWeight='SemiBold'/><TextBlock x:Name='StepThree' Text='主视觉与四枚主题图标' FontSize='10' Foreground='{DynamicResource Muted}' Margin='0,3,0,0' TextWrapping='Wrap'/></StackPanel></Grid>
+                <Grid><Grid.ColumnDefinitions><ColumnDefinition Width='30'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions><Border Width='24' Height='24' CornerRadius='12' Background='{DynamicResource RaisedHover}'><TextBlock Text='4' HorizontalAlignment='Center' VerticalAlignment='Center' FontSize='11'/></Border><StackPanel Grid.Column='1'><TextBlock Text='编译、预览与应用' FontSize='12.5' FontWeight='SemiBold'/><TextBlock x:Name='StepFour' Text='预览通过后才注入 Codex' FontSize='10' Foreground='{DynamicResource Muted}' Margin='0,3,0,0' TextWrapping='Wrap'/></StackPanel></Grid>
               </StackPanel>
 
               <StackPanel Grid.Row='1' VerticalAlignment='Bottom' Margin='0,22,0,18'>
-                <ProgressBar x:Name='Progress' Height='3' IsIndeterminate='True' Visibility='Collapsed' Foreground='{StaticResource Accent}' Background='#332D3B' Margin='0,0,0,14'/>
+                <ProgressBar x:Name='Progress' Height='3' IsIndeterminate='True' Visibility='Collapsed' Foreground='{DynamicResource Accent}' Background='{DynamicResource RaisedHover}' Margin='0,0,0,14'/>
                 <Button x:Name='GenerateButton' Content='生成皮肤并应用' Style='{StaticResource PrimaryButton}' Margin='0,0,0,9'/>
                 <Button x:Name='PreviewButton' Content='只生成皮肤预览' Style='{StaticResource StudioButton}' Margin='0,0,0,9'/>
                 <Button x:Name='ApplyButton' Content='应用当前预览' Style='{StaticResource StudioButton}' IsEnabled='False' Margin='0,0,0,9'/>
@@ -476,45 +604,45 @@ namespace CodexSkinStudio
               </StackPanel>
 
               <StackPanel Grid.Row='2'>
-                <Border Height='1' Background='{StaticResource Border}' Margin='0,0,0,15'/>
+                <Border Height='1' Background='{DynamicResource Border}' Margin='0,0,0,15'/>
                 <Button x:Name='RestoreButton' Content='恢复原版 Codex' Style='{StaticResource StudioButton}'/>
-                <TextBlock Text='恢复只移除当前应用的皮肤，不删除主题库。' FontSize='9.5' Foreground='{StaticResource Muted}' TextWrapping='Wrap' Margin='2,9,2,0'/>
+                <TextBlock Text='恢复只移除当前应用的皮肤，不删除主题库。' FontSize='9.5' Foreground='{DynamicResource Muted}' TextWrapping='Wrap' Margin='2,9,2,0'/>
               </StackPanel>
             </Grid>
 
             <Grid x:Name='LibraryPanel' Margin='3,18,3,4' Visibility='Collapsed'><Grid.RowDefinitions><RowDefinition Height='Auto'/><RowDefinition Height='*'/><RowDefinition Height='Auto'/></Grid.RowDefinitions>
               <StackPanel Margin='0,0,0,12'>
                 <TextBlock Text='LIBRARY / 主题库' FontFamily='Consolas' FontSize='14' FontWeight='Bold'/>
-                <TextBlock x:Name='LibraryCountText' Text='正在读取历史主题' FontSize='10.5' Foreground='{StaticResource Muted}' Margin='0,6,0,0'/>
+                <TextBlock x:Name='LibraryCountText' Text='正在读取历史主题' FontSize='10.5' Foreground='{DynamicResource Muted}' Margin='0,6,0,0'/>
               </StackPanel>
               <Grid Grid.Row='1'>
                 <ListBox x:Name='ThemeLibraryList' Background='Transparent' BorderThickness='0' ScrollViewer.HorizontalScrollBarVisibility='Disabled'>
                   <ListBox.ItemContainerStyle><Style TargetType='ListBoxItem'>
-                    <Setter Property='Foreground' Value='{StaticResource Text}'/><Setter Property='HorizontalContentAlignment' Value='Stretch'/><Setter Property='Padding' Value='0'/><Setter Property='Margin' Value='0,0,0,5'/>
+                    <Setter Property='Foreground' Value='{DynamicResource Text}'/><Setter Property='HorizontalContentAlignment' Value='Stretch'/><Setter Property='Padding' Value='0'/><Setter Property='Margin' Value='0,0,0,5'/>
                     <Setter Property='Template'><Setter.Value><ControlTemplate TargetType='ListBoxItem'>
                       <Border x:Name='Row' Background='Transparent' CornerRadius='9' Padding='7'><ContentPresenter/></Border>
                       <ControlTemplate.Triggers>
-                        <Trigger Property='IsMouseOver' Value='True'><Setter TargetName='Row' Property='Background' Value='#202328'/></Trigger>
-                        <Trigger Property='IsSelected' Value='True'><Setter TargetName='Row' Property='Background' Value='#302934'/></Trigger>
+                        <Trigger Property='IsMouseOver' Value='True'><Setter TargetName='Row' Property='Background' Value='{DynamicResource SelectionHover}'/></Trigger>
+                        <Trigger Property='IsSelected' Value='True'><Setter TargetName='Row' Property='Background' Value='{DynamicResource Selection}'/></Trigger>
                       </ControlTemplate.Triggers>
                     </ControlTemplate></Setter.Value></Setter>
                   </Style></ListBox.ItemContainerStyle>
                   <ListBox.ItemTemplate><DataTemplate>
                     <Grid ToolTip='{Binding Summary}'><Grid.ColumnDefinitions><ColumnDefinition Width='58'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions>
-                      <Border Width='52' Height='40' CornerRadius='6' ClipToBounds='True' Background='#22252A'><Image Source='{Binding Thumbnail}' Stretch='UniformToFill'/></Border>
-                      <StackPanel Grid.Column='1' Margin='9,1,0,0'><TextBlock Text='{Binding Name}' FontSize='11.5' FontWeight='SemiBold' Foreground='{StaticResource Text}' TextTrimming='CharacterEllipsis'/><StackPanel Orientation='Horizontal' Margin='0,5,0,0'><TextBlock Text='{Binding CreatedLabel}' FontSize='9.5' Foreground='{StaticResource Muted}'/><TextBlock Text='{Binding StatusLabel}' FontSize='9.5' FontWeight='Bold' Foreground='{StaticResource Teal}' Margin='7,0,0,0'/></StackPanel></StackPanel>
+                      <Border Width='52' Height='40' CornerRadius='6' ClipToBounds='True' Background='{DynamicResource RaisedHover}'><Image Source='{Binding Thumbnail}' Stretch='UniformToFill'/></Border>
+                      <StackPanel Grid.Column='1' Margin='9,1,0,0'><TextBlock Text='{Binding Name}' FontSize='11.5' FontWeight='SemiBold' Foreground='{DynamicResource Text}' TextTrimming='CharacterEllipsis'/><StackPanel Orientation='Horizontal' Margin='0,5,0,0'><TextBlock Text='{Binding CreatedLabel}' FontSize='9.5' Foreground='{DynamicResource Muted}'/><TextBlock Text='{Binding StatusLabel}' FontSize='9.5' FontWeight='Bold' Foreground='{DynamicResource Teal}' Margin='7,0,0,0'/></StackPanel></StackPanel>
                     </Grid>
                   </DataTemplate></ListBox.ItemTemplate>
                 </ListBox>
-                <TextBlock x:Name='LibraryEmptyText' Text='还没有历史主题。&#x0a;生成第一套皮肤后会自动出现在这里。' FontSize='10.5' Foreground='{StaticResource Muted}' TextAlignment='Center' TextWrapping='Wrap' HorizontalAlignment='Center' VerticalAlignment='Center' Visibility='Collapsed'/>
+                <TextBlock x:Name='LibraryEmptyText' Text='还没有历史主题。&#x0a;生成第一套皮肤后会自动出现在这里。' FontSize='10.5' Foreground='{DynamicResource Muted}' TextAlignment='Center' TextWrapping='Wrap' HorizontalAlignment='Center' VerticalAlignment='Center' Visibility='Collapsed'/>
               </Grid>
               <StackPanel Grid.Row='2' Margin='0,14,0,0'>
                 <Button x:Name='LibraryApplyButton' Content='应用选中主题' Style='{StaticResource PrimaryButton}' IsEnabled='False' Margin='0,0,0,9'/>
                 <Grid><Grid.ColumnDefinitions><ColumnDefinition Width='*'/><ColumnDefinition Width='*'/></Grid.ColumnDefinitions>
                   <Button x:Name='RefreshLibraryButton' Content='刷新主题库' Style='{StaticResource StudioButton}' Margin='0,0,4,0'/>
-                  <Button x:Name='DeleteLibraryButton' Grid.Column='1' Content='删除主题' ToolTip='删除当前选中的历史主题' Style='{StaticResource StudioButton}' Foreground='#F6A2A2' BorderBrush='#714047' Margin='4,0,0,0' IsEnabled='False'/>
+                  <Button x:Name='DeleteLibraryButton' Grid.Column='1' Content='删除主题' ToolTip='删除当前选中的历史主题' Style='{StaticResource StudioButton}' Foreground='{DynamicResource Danger}' BorderBrush='{DynamicResource DangerBorder}' Margin='4,0,0,0' IsEnabled='False'/>
                 </Grid>
-                <TextBlock Text='历史主题保存在本机，不会因切换或恢复原版而删除。' FontSize='9.5' Foreground='{StaticResource Muted}' TextWrapping='Wrap' Margin='2,10,2,0'/>
+                <TextBlock Text='历史主题保存在本机，不会因切换或恢复原版而删除。' FontSize='9.5' Foreground='{DynamicResource Muted}' TextWrapping='Wrap' Margin='2,10,2,0'/>
               </StackPanel>
             </Grid>
           </Grid>
@@ -522,15 +650,29 @@ namespace CodexSkinStudio
       </Border>
     </Grid>
 
-    <Border Grid.Row='2' Background='#111316' BorderBrush='{StaticResource Border}' BorderThickness='0,1,0,0'>
+    <Border Grid.Row='2' Background='{DynamicResource TopBar}' BorderBrush='{DynamicResource Border}' BorderThickness='0,1,0,0'>
       <Grid Margin='20,0'><Grid.ColumnDefinitions><ColumnDefinition Width='*'/><ColumnDefinition Width='Auto'/></Grid.ColumnDefinitions>
-        <StackPanel Orientation='Horizontal' VerticalAlignment='Center'><Ellipse Width='6' Height='6' Fill='#756A7D' Margin='0,0,8,0'/><TextBlock x:Name='StatusText' Text='准备就绪' FontSize='10.5' Foreground='{StaticResource Muted}'/></StackPanel>
-        <TextBlock Grid.Column='1' Text='Portable · Local-first' FontSize='10' Foreground='#756A7D' VerticalAlignment='Center'/>
+        <StackPanel Orientation='Horizontal' VerticalAlignment='Center'><Ellipse Width='6' Height='6' Fill='{DynamicResource Teal}' Margin='0,0,8,0'/><TextBlock x:Name='StatusText' Text='准备就绪' FontSize='10.5' Foreground='{DynamicResource Muted}'/></StackPanel>
+        <TextBlock Grid.Column='1' Text='Portable · Local-first' FontSize='10' Foreground='{DynamicResource Muted}' VerticalAlignment='Center'/>
       </Grid>
     </Border>
   </Grid>
 </Window>";
-            using (var reader = XmlReader.Create(new StringReader(xaml))) return (Window)XamlReader.Load(reader);
+            using (var reader = XmlReader.Create(new StringReader(xaml)))
+            {
+                var window = (Window)XamlReader.Load(reader);
+                window.WindowStyle = WindowStyle.None;
+                window.ResizeMode = ResizeMode.CanResize;
+                WindowChrome.SetWindowChrome(window, new WindowChrome
+                {
+                    CaptionHeight = 62,
+                    ResizeBorderThickness = new Thickness(6),
+                    GlassFrameThickness = new Thickness(0),
+                    CornerRadius = new CornerRadius(0),
+                    UseAeroCaptionButtons = false
+                });
+                return window;
+            }
         }
 
         private T Find<T>(string name) where T : class
@@ -544,6 +686,7 @@ namespace CodexSkinStudio
             themeLibraryList = Find<ListBox>("ThemeLibraryList");
             briefBox = Find<TextBox>("BriefBox");
             presetBox = Find<ComboBox>("PresetBox");
+            colorModeBox = Find<ComboBox>("ColorModeBox");
             previewImage = Find<Image>("PreviewImage");
             petImage = Find<Image>("PetImage");
             previewTint = Find<Border>("PreviewTint");
@@ -580,6 +723,10 @@ namespace CodexSkinStudio
             libraryApplyButton = Find<Button>("LibraryApplyButton");
             refreshLibraryButton = Find<Button>("RefreshLibraryButton");
             deleteLibraryButton = Find<Button>("DeleteLibraryButton");
+            studioThemeButton = Find<Button>("StudioThemeButton");
+            minimizeButton = Find<Button>("MinimizeButton");
+            maximizeButton = Find<Button>("MaximizeButton");
+            closeButton = Find<Button>("CloseButton");
             flowPanel = Find<Grid>("FlowPanel");
             libraryPanel = Find<Grid>("LibraryPanel");
             progress = Find<ProgressBar>("Progress");
@@ -605,10 +752,30 @@ namespace CodexSkinStudio
             libraryApplyButton.Click += async delegate { await ApplyAsync(); };
             refreshLibraryButton.Click += delegate { RefreshThemeLibrary(false); };
             deleteLibraryButton.Click += delegate { DeleteSelectedTheme(); };
+            studioThemeButton.Click += delegate
+            {
+                ApplyStudioTheme(!studioDark);
+                SaveStudioTheme();
+                SetStatus(studioDark ? "工作台已切换为暗色模式" : "工作台已切换为明亮模式");
+            };
+            minimizeButton.Click += delegate { Window.WindowState = WindowState.Minimized; };
+            maximizeButton.Click += delegate
+            {
+                Window.WindowState = Window.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+            };
+            closeButton.Click += delegate { Window.Close(); };
+            Window.StateChanged += delegate { UpdateMaximizeButton(); };
+            foreach (Button button in new[] { studioThemeButton, minimizeButton, maximizeButton, closeButton })
+                WindowChrome.SetIsHitTestVisibleInChrome(button, true);
             presetBox.SelectionChanged += delegate
             {
                 ComboBoxItem selected = presetBox.SelectedItem as ComboBoxItem;
                 if (selected != null) SetStatus("已启用风格导演：" + Convert.ToString(selected.Content).Split('·')[0].Trim());
+            };
+            colorModeBox.SelectionChanged += delegate
+            {
+                ComboBoxItem selected = colorModeBox.SelectedItem as ComboBoxItem;
+                if (selected != null) SetStatus("已选择界面明暗：" + Convert.ToString(selected.Content).Split('·')[0].Trim());
             };
             referenceList.SelectionChanged += delegate
             {
@@ -623,6 +790,77 @@ namespace CodexSkinStudio
             };
             Window.DragOver += OnDragOver;
             Window.Drop += OnDrop;
+        }
+
+        private static string StudioThemePath()
+        {
+            return Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "CodexSkinStudio", "studio-theme.txt");
+        }
+
+        private static bool ReadStudioTheme()
+        {
+            try
+            {
+                return File.Exists(StudioThemePath())
+                    && String.Equals(File.ReadAllText(StudioThemePath()).Trim(), "dark", StringComparison.OrdinalIgnoreCase);
+            }
+            catch (IOException) { return false; }
+            catch (UnauthorizedAccessException) { return false; }
+        }
+
+        private void SaveStudioTheme()
+        {
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(StudioThemePath()));
+                File.WriteAllText(StudioThemePath(), studioDark ? "dark" : "light", new UTF8Encoding(false));
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
+
+        private void ApplyStudioTheme(bool dark)
+        {
+            studioDark = dark;
+            Dictionary<string, string> colors = dark
+                ? new Dictionary<string, string>
+                {
+                    { "AppBackground", "#121416" }, { "TopBar", "#16191C" }, { "Panel", "#181B1E" },
+                    { "Raised", "#22262A" }, { "RaisedHover", "#2B3035" }, { "InputBackground", "#1E2226" },
+                    { "Border", "#353B41" }, { "Text", "#F1EEE8" }, { "Muted", "#9CA1A7" },
+                    { "Accent", "#E99746" }, { "AccentHover", "#F2AA61" }, { "AccentText", "#21170E" },
+                    { "Teal", "#73C8B7" }, { "StatusBackground", "#1D2927" }, { "StatusBorder", "#35534E" },
+                    { "StatusText", "#BCE4DC" }, { "InfoBackground", "#172320" }, { "InfoBorder", "#2E4A44" },
+                    { "InfoText", "#AFD9D0" }, { "Selection", "#352B24" }, { "ScrollTrack", "#191C1F" },
+                    { "ScrollThumb", "#4B5158" }, { "ScrollThumbHover", "#676E76" }, { "Danger", "#F0A0A0" },
+                    { "DangerBorder", "#704248" }
+                }
+                : new Dictionary<string, string>
+                {
+                    { "AppBackground", "#F7F5F1" }, { "TopBar", "#F0EDE7" }, { "Panel", "#F2EFE9" },
+                    { "Raised", "#FBF9F5" }, { "RaisedHover", "#EEE9E1" }, { "InputBackground", "#FCFAF6" },
+                    { "Border", "#D8D2C8" }, { "Text", "#27231F" }, { "Muted", "#716B63" },
+                    { "Accent", "#D97928" }, { "AccentHover", "#C9691D" }, { "AccentText", "#FCF7EF" },
+                    { "Teal", "#187B70" }, { "StatusBackground", "#E7F2EF" }, { "StatusBorder", "#BDD8D1" },
+                    { "StatusText", "#22685F" }, { "InfoBackground", "#EAF4F1" }, { "InfoBorder", "#C5DDD7" },
+                    { "InfoText", "#2B675F" }, { "Selection", "#F5E6D7" }, { "ScrollTrack", "#EEEAE3" },
+                    { "ScrollThumb", "#B8B1A7" }, { "ScrollThumbHover", "#91897E" }, { "Danger", "#B84E57" },
+                    { "DangerBorder", "#D7A8AC" }
+                };
+            foreach (KeyValuePair<string, string> color in colors)
+                Window.Resources[color.Key] = BrushFrom(color.Value);
+            studioThemeButton.Content = studioDark ? "☀  明亮模式" : "☾  暗色模式";
+            studioThemeButton.ToolTip = studioDark ? "切换工作台为明亮模式" : "切换工作台为暗色模式";
+            UpdateMaximizeButton();
+        }
+
+        private void UpdateMaximizeButton()
+        {
+            if (maximizeButton == null) return;
+            maximizeButton.Content = Window.WindowState == WindowState.Maximized ? "❐" : "□";
+            maximizeButton.ToolTip = Window.WindowState == WindowState.Maximized ? "还原" : "最大化";
         }
 
         private void OnDragOver(object sender, DragEventArgs eventArgs)
@@ -697,7 +935,12 @@ namespace CodexSkinStudio
         {
             previewImage.Source = null;
             petImage.Source = null;
-            foreach (Image icon in previewIconImages) icon.Source = null;
+            for (int index = 0; index < previewIconImages.Count; index++)
+            {
+                previewIconImages[index].Source = null;
+                previewAccents[index].Visibility = Visibility.Collapsed;
+                previewCardTitles[index].Margin = new Thickness(0);
+            }
             petFrame.Visibility = Visibility.Collapsed;
             canvasHint.Visibility = Visibility.Visible;
             previewTitle.Text = "等待灵感";
@@ -725,6 +968,11 @@ namespace CodexSkinStudio
                     runtimeText.Text = "本地 Codex 需要处理";
                     SetStatus(UsefulError(result));
                 }
+            }
+            catch (Exception error)
+            {
+                runtimeText.Text = "本地 Codex 暂不可用";
+                SetStatus("运行环境检查失败：" + error.Message);
             }
             finally
             {
@@ -773,6 +1021,8 @@ namespace CodexSkinStudio
                 }
                 arguments.Add("--requirements-file");
                 arguments.Add(requirementsFile);
+                arguments.Add("--color-mode");
+                arguments.Add(colorModeBox.SelectedIndex == 1 ? "light" : colorModeBox.SelectedIndex == 2 ? "dark" : "auto");
                 arguments.Add("--output");
                 arguments.Add(output);
                 arguments.Add("--progress-file");
@@ -848,6 +1098,8 @@ namespace CodexSkinStudio
                 previewCardTitles[index].Text = defaultTitles[index];
                 previewCardSubtitles[index].Text = defaultSubtitles[index];
                 previewIconImages[index].Source = null;
+                previewAccents[index].Visibility = Visibility.Collapsed;
+                previewCardTitles[index].Margin = new Thickness(0);
             }
             petFrame.Visibility = Visibility.Collapsed;
             Dictionary<string, object> copy = DictionaryValue(design, "copy");
@@ -888,6 +1140,8 @@ namespace CodexSkinStudio
                         var icon = new CroppedBitmap(atlas, new Int32Rect(x, y, cellWidth, cellHeight));
                         icon.Freeze();
                         previewIconImages[index].Source = icon;
+                        previewAccents[index].Visibility = Visibility.Visible;
+                        previewCardTitles[index].Margin = new Thickness(0, 6, 0, 0);
                     }
                 }
             }
@@ -946,10 +1200,10 @@ namespace CodexSkinStudio
         {
             flowPanel.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
             libraryPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
-            flowModeButton.Background = BrushFrom(show ? "#1D2024" : "#282C31");
-            libraryModeButton.Background = BrushFrom(show ? "#282C31" : "#1D2024");
-            flowModeButton.BorderBrush = BrushFrom(show ? "#30343A" : "#F6A04D");
-            libraryModeButton.BorderBrush = BrushFrom(show ? "#F6A04D" : "#30343A");
+            flowModeButton.SetResourceReference(Control.BackgroundProperty, show ? "Raised" : "Selection");
+            libraryModeButton.SetResourceReference(Control.BackgroundProperty, show ? "Selection" : "Raised");
+            flowModeButton.SetResourceReference(Control.BorderBrushProperty, show ? "Border" : "Accent");
+            libraryModeButton.SetResourceReference(Control.BorderBrushProperty, show ? "Accent" : "Border");
             if (show && !busy) RefreshThemeLibrary(false);
         }
 

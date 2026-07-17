@@ -148,9 +148,15 @@ async function runImageJob({ job, prompt, images, destinationBase, kind, timeout
   return { path: destination, width: info.width, height: info.height, format: info.format };
 }
 
-function heroPrompt(spec, analysis) {
+function heroPrompt(spec, analysis, colorMode = 'auto') {
+  const colorDirections = {
+    auto: 'Auto color mode: follow the planned palette and preserve its intended light or dark foundation; do not darken a light palette by default.',
+    light: 'Mandatory light mode: keep the canvas high-key, airy, and predominantly pale with copy-safe space for dark interface text; do not turn it into a night or dark-interface scene.',
+    dark: 'Mandatory dark mode: keep the canvas low-luminance and predominantly deep-toned with copy-safe space for light interface text.',
+  };
+  const colorDirection = colorDirections[colorMode] || colorDirections.auto;
   const composition = spec.effects.layout === 'banner'
-    ? `The asset will appear inside an ultra-wide banner. Keep the complete head, face, and identifying silhouette inside the upper-right safe region around ${spec.effects.focalX}% x / ${spec.effects.focalY}% y. Do not place the head against the top edge. Keep the left half calm and dark enough for live interface copy.`
+    ? `The asset will appear inside an ultra-wide banner. Keep the complete head, face, and identifying silhouette inside the upper-right safe region around ${spec.effects.focalX}% x / ${spec.effects.focalY}% y. Do not place the head against the top edge. Keep the left half calm, low-detail, and suitable for live interface copy.`
     : `Compose a complete desktop canvas with the focal subject around ${spec.effects.focalX}% x / ${spec.effects.focalY}% y and deliberate copy-safe space on the left.`;
   return [
     'Use the built-in image generation tool exactly once. Do not browse, call MCP tools, or run shell commands.',
@@ -160,6 +166,7 @@ function heroPrompt(spec, analysis) {
     `Verified subject: ${analysis.subject.identity} — ${analysis.subject.summary}`,
     `Must preserve: ${analysis.mustPreserve.join('; ')}`,
     `Primary request: ${spec.assets.heroPrompt}`,
+    `Color direction: ${colorDirection}`,
     `Palette: ${Object.values(spec.palette).join(', ')}`,
     `Motifs: ${spec.assets.motifs.join(', ')}`,
     `Composition: ${composition}`,
@@ -168,13 +175,20 @@ function heroPrompt(spec, analysis) {
   ].join('\n');
 }
 
-function iconPrompt(spec) {
+function iconPrompt(spec, colorMode = 'auto') {
+  const colorDirections = {
+    auto: 'Auto color mode: preserve the planned palette foundation without defaulting to dark quadrant backgrounds.',
+    light: 'Mandatory light mode: use predominantly pale, high-luminance quadrant backgrounds with crisp dark pictograms and the planned accents.',
+    dark: 'Mandatory dark mode: use predominantly deep, low-luminance quadrant backgrounds with crisp light pictograms and the planned accents.',
+  };
+  const colorDirection = colorDirections[colorMode] || colorDirections.auto;
   return [
     'Use the built-in image generation tool exactly once. Do not browse, call MCP tools, or run shell commands.',
     'Create the final raster asset described below.',
     'Use case: stylized-concept',
     'Asset type: square 2x2 UI icon atlas for a Codex desktop theme',
     `Primary request: ${spec.assets.iconPrompt}`,
+    `Color direction: ${colorDirection}`,
     `Visual subject: ${spec.assets.subject}`,
     `Palette: ${Object.values(spec.palette).join(', ')}`,
     `Motifs: ${spec.assets.motifs.join(', ')}`,
@@ -189,7 +203,7 @@ export async function generateSkinIconAtlasWithLocalCodex(job, spec, hero) {
   await ensureDir(directory);
   return runImageJob({
     job,
-    prompt: iconPrompt(spec),
+    prompt: iconPrompt(spec, job.colorMode),
     images: [hero.path],
     destinationBase: path.join(directory, 'icons'),
     kind: 'icons',
@@ -202,7 +216,7 @@ export async function generateSkinAssetsWithLocalCodex(job, spec, analysis, { on
   await onStage?.('generating-hero');
   const hero = await runImageJob({
     job,
-    prompt: heroPrompt(spec, analysis),
+    prompt: heroPrompt(spec, analysis, job.colorMode),
     images: job.images,
     destinationBase: path.join(directory, 'hero'),
     kind: 'hero',

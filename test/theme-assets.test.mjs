@@ -35,6 +35,8 @@ test('collects local Codex hero and icon outputs into the isolated job', { concu
     const countFile = process.env.FAKE_IMAGE_COUNT;
     let count = 0;
     try { count = Number(fs.readFileSync(countFile, 'utf8')); } catch {}
+    const prompt = fs.readFileSync(0, 'utf8');
+    if (process.env.FAKE_IMAGE_PROMPTS) fs.appendFileSync(process.env.FAKE_IMAGE_PROMPTS, JSON.stringify(prompt) + '\\n');
     const payload = count === 0 ? process.env.FAKE_HERO_PNG : process.env.FAKE_ICONS_PNG;
     const directory = path.join(process.env.CODEX_HOME, 'generated_images', 'fake-' + count);
     fs.mkdirSync(directory, { recursive: true });
@@ -46,18 +48,23 @@ test('collects local Codex hero and icon outputs into the isolated job', { concu
   process.env.CODEX_HOME = path.join(root, 'codex-home');
   process.env.CODEX_SKIN_HOME = path.join(root, 'studio-home');
   process.env.FAKE_IMAGE_COUNT = path.join(root, 'count.txt');
+  process.env.FAKE_IMAGE_PROMPTS = path.join(root, 'prompts.jsonl');
   process.env.FAKE_HERO_PNG = pngHeader(1536, 1024).toString('base64');
   process.env.FAKE_ICONS_PNG = pngHeader(1024, 1024).toString('base64');
   try {
-    const job = await createJob([reference], 'Miku concert workspace');
+    const job = await createJob([reference], 'Miku concert workspace', 'light');
     const { pet, ...spec } = sampleSpec();
+    spec.effects = { ...spec.effects, layout: 'banner' };
     const result = await generateSkinAssetsWithLocalCodex(job, spec, analysis());
     assert.equal(result.hero.width, 1536);
     assert.equal(result.icons.height, 1024);
     assert.equal((await fs.stat(result.hero.path)).isFile(), true);
     assert.equal((await fs.stat(result.icons.path)).isFile(), true);
+    const prompts = (await fs.readFile(process.env.FAKE_IMAGE_PROMPTS, 'utf8')).trim().split('\n').map(JSON.parse);
+    assert.match(prompts[0], /Mandatory light mode/);
+    assert.doesNotMatch(prompts[0], /dark enough for live interface copy/);
+    assert.match(prompts[1], /Mandatory light mode/);
   } finally {
-    for (const name of ['CODEX_SKIN_CODEX', 'CODEX_HOME', 'CODEX_SKIN_HOME', 'FAKE_IMAGE_COUNT', 'FAKE_HERO_PNG', 'FAKE_ICONS_PNG']) delete process.env[name];
+    for (const name of ['CODEX_SKIN_CODEX', 'CODEX_HOME', 'CODEX_SKIN_HOME', 'FAKE_IMAGE_COUNT', 'FAKE_IMAGE_PROMPTS', 'FAKE_HERO_PNG', 'FAKE_ICONS_PNG']) delete process.env[name];
   }
 });
-
