@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { validateBundle } from '../src/bundle-validator.mjs';
-import { compileBundle } from '../src/theme-compiler.mjs';
+import { codexRuntimePatchCss, compileBundle } from '../src/theme-compiler.mjs';
 import { replaceBundlePetSpritesheet } from '../src/pet-replacer.mjs';
 import { applyBundle, restoreOriginal, restoreSkin } from '../src/store.mjs';
 import { sampleSpec, writePng } from './helpers.mjs';
@@ -23,6 +23,12 @@ async function fixture() {
   await writePng(icons, 1024, 1024);
   return { root, background, pet, petReplacement, generatedHero, icons };
 }
+
+test('runtime patch upgrades historical themes without regeneration', () => {
+  const css = codexRuntimePatchCss(sampleSpec());
+  assert.match(css, /skin-thread-header-layout/);
+  assert.match(css, /CODEX_SKIN_BACKGROUND_DATA_URL/);
+});
 
 test('compiles and validates a complete bundle, then detects tampering', async () => {
   const files = await fixture();
@@ -82,6 +88,7 @@ test('compiles a skin-only bundle with native Codex layout selectors and no pet'
   assert.match(css, /data-skin-suggestion-index/);
   assert.match(css, /skin-card-copy/);
   assert.match(css, /skin-project-toolbar/);
+  assert.match(css, /skin-thread-header-layout/);
   assert.match(css, /codex-skin-composer-top/);
   assert.match(css, /padding-right: 72px/);
   assert.match(css, /background-size: 100% 100%, auto 118%/);

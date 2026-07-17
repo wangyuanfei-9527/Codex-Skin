@@ -65,6 +65,69 @@ export function codexNativeTokenCss(palette) {
 }`;
 }
 
+export function codexRuntimePatchCss(design) {
+  const p = design.palette;
+  const e = design.effects;
+  return `:root.codex-skin-studio-active main.main-surface:not(.skin-home-shell)::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 47px 0 0;
+  pointer-events: none;
+  opacity: ${Math.max(0.16, Math.min(0.30, e.overlayOpacity * 0.52)).toFixed(2)};
+  background: url("${BACKGROUND_PLACEHOLDER}") no-repeat ${e.backgroundPosition} / cover;
+  filter: blur(${Math.min(e.blur, 8)}px) saturate(.82) contrast(.96);
+  transform: scale(1.025);
+}
+:root.codex-skin-studio-active main.main-surface:not(.skin-home-shell)::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 47px 0 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, ${hexRgba(p.background, 0.88)}, ${hexRgba(p.background, 0.68)} 54%, ${hexRgba(p.surface, 0.54)});
+}
+:root.codex-skin-studio-active main.main-surface > * { position: relative; z-index: 1; }
+:root.codex-skin-studio-active main.main-surface > header.app-header-tint {
+  background: linear-gradient(90deg, ${hexRgba(p.surface, 0.98)}, ${hexRgba(p.surfaceAlt, 0.94)}) !important;
+  border-bottom: 1px solid ${hexRgba(p.border, 0.72)} !important;
+  backdrop-filter: none !important;
+}
+:root.codex-skin-studio-active main.main-surface > header.app-header-tint.skin-thread-header {
+  min-height: 48px !important;
+  height: 48px !important;
+  box-shadow: 0 8px 22px ${hexRgba(p.background, 0.18)} !important;
+}
+:root.codex-skin-studio-active .skin-thread-header-layout {
+  width: 100% !important;
+  height: 48px !important;
+  margin: 0 !important;
+  padding: 0 22px !important;
+}
+:root.codex-skin-studio-active .skin-thread-title-row {
+  gap: 7px !important;
+  color: ${p.text} !important;
+}
+:root.codex-skin-studio-active .skin-thread-title {
+  max-width: min(520px, 55vw) !important;
+  color: ${p.text} !important;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.01em !important;
+}
+:root.codex-skin-studio-active .skin-thread-title::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 9px;
+  vertical-align: 2px;
+  border-radius: 999px;
+  background: ${p.accent};
+  box-shadow: 0 0 9px ${hexRgba(p.accent, 0.58)};
+}`;
+}
+
 function cssFor(spec, { includePet = true, includeGeneratedIcons = false } = {}) {
   const p = spec.palette;
   const e = spec.effects;
@@ -236,31 +299,7 @@ ${codexNativeTokenCss(p)}
   box-shadow: -8px 0 30px ${hexRgba(p.accent, 0.07)} !important;
   overflow: hidden !important;
 }
-:root.codex-skin-studio-active main.main-surface:not(.skin-home-shell)::before {
-  content: "";
-  position: absolute;
-  z-index: 0;
-  inset: 47px 0 0;
-  pointer-events: none;
-  opacity: ${Math.max(0.06, Math.min(0.18, e.overlayOpacity * 0.32)).toFixed(2)};
-  background: url("${BACKGROUND_PLACEHOLDER}") no-repeat ${e.backgroundPosition} / cover;
-  filter: blur(${Math.min(e.blur, 12)}px) saturate(.72) contrast(.94);
-  transform: scale(1.025);
-}
-:root.codex-skin-studio-active main.main-surface:not(.skin-home-shell)::after {
-  content: "";
-  position: absolute;
-  z-index: 0;
-  inset: 47px 0 0;
-  pointer-events: none;
-  background: linear-gradient(90deg, ${hexRgba(p.background, 0.93)}, ${hexRgba(p.background, 0.79)} 54%, ${hexRgba(p.surface, 0.68)});
-}
-:root.codex-skin-studio-active main.main-surface > * { position: relative; z-index: 1; }
-:root.codex-skin-studio-active main.main-surface > header.app-header-tint {
-  background: linear-gradient(90deg, ${hexRgba(p.surface, 0.96)}, ${hexRgba(p.surfaceAlt, 0.90)}, ${hexRgba(p.accentAlt, 0.13)}) !important;
-  border-bottom: 1px solid var(--codex-skin-border) !important;
-  backdrop-filter: none !important;
-}
+${codexRuntimePatchCss(spec)}
 :root.codex-skin-studio-active [role="main"] {
   color: var(--codex-skin-text) !important;
   background: transparent !important;

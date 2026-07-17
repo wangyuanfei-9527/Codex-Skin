@@ -82,6 +82,10 @@ export function buildInjectionExpression(payload) {
       document.querySelectorAll('.skin-home-shell').forEach(node => node.classList.remove('skin-home-shell'));
       document.querySelectorAll('.skin-new-task').forEach(node => node.classList.remove('skin-new-task'));
       document.querySelectorAll('.skin-project-toolbar').forEach(node => node.classList.remove('skin-project-toolbar'));
+      document.querySelectorAll('.skin-thread-header').forEach(node => node.classList.remove('skin-thread-header'));
+      document.querySelectorAll('.skin-thread-header-layout').forEach(node => node.classList.remove('skin-thread-header-layout'));
+      document.querySelectorAll('.skin-thread-title-row').forEach(node => node.classList.remove('skin-thread-title-row'));
+      document.querySelectorAll('.skin-thread-title').forEach(node => node.classList.remove('skin-thread-title'));
       document.querySelectorAll('.skin-card-copy').forEach(node => node.remove());
       document.querySelectorAll('[data-skin-generated-aria-label]').forEach(node => {
         node.removeAttribute('aria-label');
@@ -112,12 +116,18 @@ export function buildInjectionExpression(payload) {
     root.classList.toggle('skin-layout-banner', payload.layout === 'banner');
     root.classList.toggle('skin-layout-fullscreen', payload.layout !== 'banner');
 
-    const home = document.querySelector('[role="main"]:has([data-testid="home-icon"])');
-    document.querySelectorAll('[role="main"].codex-skin-home').forEach(node => {
-      if (node !== home) node.classList.remove('codex-skin-home');
-    });
-    if (home) home.classList.add('codex-skin-home');
-    shellMain.classList.toggle('skin-home-shell', Boolean(home));
+    let home = null;
+    let resizeObserver = null;
+    const refreshPageContext = () => {
+      home = document.querySelector('[role="main"]:has([data-testid="home-icon"])');
+      document.querySelectorAll('[role="main"].codex-skin-home').forEach(node => {
+        if (node !== home) node.classList.remove('codex-skin-home');
+      });
+      if (home) home.classList.add('codex-skin-home');
+      shellMain.classList.toggle('skin-home-shell', Boolean(home));
+      document.getElementById('codex-skin-studio-chrome')?.classList.toggle('skin-home-shell', Boolean(home));
+      if (home && resizeObserver) resizeObserver.observe(home);
+    };
 
     const suggestionLabels = [
       ['探索并理解代码', 'Explore and understand code'],
@@ -149,6 +159,7 @@ export function buildInjectionExpression(payload) {
       copy.querySelector('small').textContent = subtitle;
     };
     const markNativeControls = () => {
+      refreshPageContext();
       home?.querySelectorAll('[data-skin-suggestion-index]').forEach(node => node.removeAttribute('data-skin-suggestion-index'));
       if (home) {
         const groupButtons = [...home.querySelectorAll('[class~="group/home-suggestions"] button')];
@@ -176,12 +187,26 @@ export function buildInjectionExpression(payload) {
         const isNewTask = newTaskLabels.some(label => (button.textContent || '').includes(label));
         button.classList.toggle('skin-new-task', isNewTask);
       }
+      document.querySelectorAll('.skin-thread-header, .skin-thread-header-layout, .skin-thread-title-row, .skin-thread-title').forEach(node => {
+        node.classList.remove('skin-thread-header', 'skin-thread-header-layout', 'skin-thread-title-row', 'skin-thread-title');
+      });
+      const threadHeader = shellMain.querySelector(':scope > header.app-header-tint');
+      const threadHeaderLayout = threadHeader?.querySelector('.draggable.grid.w-full');
+      const threadTitleRow = threadHeaderLayout?.firstElementChild;
+      const threadTitle = threadTitleRow?.firstElementChild;
+      threadHeader?.classList.add('skin-thread-header');
+      threadHeaderLayout?.classList.add('skin-thread-header-layout');
+      threadTitleRow?.classList.add('skin-thread-title-row');
+      threadTitle?.classList.add('skin-thread-title');
     };
     markNativeControls();
     const scheduler = { timer: null };
     const observer = new MutationObserver(() => {
       if (scheduler.timer) clearTimeout(scheduler.timer);
-      scheduler.timer = setTimeout(markNativeControls, 120);
+      scheduler.timer = setTimeout(() => {
+        markNativeControls();
+        syncChromeGeometry();
+      }, 120);
     });
     observer.observe(document.documentElement, { childList: true, subtree: true });
     const state = { observer, get timer() { return scheduler.timer; } };
@@ -214,7 +239,7 @@ export function buildInjectionExpression(payload) {
       }
     };
     syncChromeGeometry();
-    const resizeObserver = new ResizeObserver(syncChromeGeometry);
+    resizeObserver = new ResizeObserver(syncChromeGeometry);
     resizeObserver.observe(shellMain);
     if (home) resizeObserver.observe(home);
     state.resizeObserver = resizeObserver;
@@ -233,29 +258,74 @@ export function buildInjectionExpression(payload) {
   })()`;
 }
 
-export async function evaluateTarget(webSocketUrl, expression, timeoutMs = 5_000) {
+export function buildDocumentReadyExpression(expression) {
+  return `(() => {
+    const bootstrapKey = '__CODEX_SKIN_STUDIO_BOOTSTRAP__';
+    const previousBootstrap = window[bootstrapKey];
+    previousBootstrap?.observer?.disconnect();
+    if (previousBootstrap?.timer) clearTimeout(previousBootstrap.timer);
+    const applyWhenReady = () => {
+      if (!document.querySelector('main.main-surface') || !document.querySelector('aside.app-shell-left-panel')) return false;
+      return (${expression}) === 'injected';
+    };
+    if (applyWhenReady()) {
+      delete window[bootstrapKey];
+      return 'injected';
+    }
+    const bootstrapObserver = new MutationObserver(() => {
+      if (!applyWhenReady()) return;
+      bootstrapObserver.disconnect();
+      clearTimeout(timer);
+      delete window[bootstrapKey];
+    });
+    bootstrapObserver.observe(document.documentElement || document, { childList: true, subtree: true });
+    const timer = setTimeout(() => {
+      bootstrapObserver.disconnect();
+      delete window[bootstrapKey];
+    }, 30_000);
+    window[bootstrapKey] = { observer: bootstrapObserver, timer };
+    return 'waiting-for-codex-shell';
+  })()`;
+}
+
+export async function prepareTarget(webSocketUrl, expression, timeoutMs = 5_000) {
   return new Promise((resolve, reject) => {
     const socket = new WebSocket(webSocketUrl);
-    const timer = setTimeout(() => {
+    const pending = new Set([1, 2]);
+    let currentResult;
+    let settled = false;
+    const finish = (error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
       socket.close();
-      reject(new Error('CDP evaluation timed out'));
-    }, timeoutMs);
-    socket.addEventListener('open', () => socket.send(JSON.stringify({
-      id: 1,
-      method: 'Runtime.evaluate',
-      params: { expression, returnByValue: true, awaitPromise: true },
-    })));
+      if (error) reject(error);
+      else resolve(currentResult);
+    };
+    const timer = setTimeout(() => finish(new Error('CDP target preparation timed out')), timeoutMs);
+    socket.addEventListener('open', () => {
+      socket.send(JSON.stringify({
+        id: 1,
+        method: 'Runtime.evaluate',
+        params: { expression, returnByValue: true, awaitPromise: true },
+      }));
+      socket.send(JSON.stringify({
+        id: 2,
+        method: 'Page.addScriptToEvaluateOnNewDocument',
+        params: { source: expression },
+      }));
+    });
     socket.addEventListener('message', (event) => {
       const message = JSON.parse(String(event.data));
-      if (message.id !== 1) return;
-      clearTimeout(timer);
-      socket.close();
-      if (message.error || message.result?.exceptionDetails) reject(new Error('CDP rejected the skin injection'));
-      else resolve(message.result?.result?.value);
+      if (!pending.has(message.id)) return;
+      if (message.error || message.result?.exceptionDetails) {
+        finish(new Error('CDP rejected the skin preparation'));
+        return;
+      }
+      if (message.id === 1) currentResult = message.result?.result?.value;
+      pending.delete(message.id);
+      if (pending.size === 0) finish();
     });
-    socket.addEventListener('error', () => {
-      clearTimeout(timer);
-      reject(new Error('Could not connect to the Codex CDP target'));
-    });
+    socket.addEventListener('error', () => finish(new Error('Could not connect to the Codex CDP target')));
   });
 }

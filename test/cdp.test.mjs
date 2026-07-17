@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { assertLoopbackDebuggerUrl, buildInjectionExpression } from '../src/windows/cdp.mjs';
+import { assertLoopbackDebuggerUrl, buildDocumentReadyExpression, buildInjectionExpression } from '../src/windows/cdp.mjs';
 
 test('accepts only the selected loopback CDP endpoint', () => {
   assert.equal(assertLoopbackDebuggerUrl('ws://127.0.0.1:9222/devtools/page/1', 9222), 'ws://127.0.0.1:9222/devtools/page/1');
@@ -21,7 +21,14 @@ test('marks the real suggestion cards and keeps their labels whitespace tolerant
   assert.match(expression, /data-skin-suggestion-index/);
   assert.match(expression, /skin-card-copy/);
   assert.match(expression, /skin-project-toolbar/);
+  assert.match(expression, /skin-thread-header/);
+  assert.match(expression, /skin-thread-title/);
+  assert.match(expression, /refreshPageContext/);
   assert.match(expression, /replace\(\/\\s\+\/g/);
   assert.match(expression, /MutationObserver/);
   assert.match(expression, /ResizeObserver/);
+  const documentReadyExpression = buildDocumentReadyExpression(expression);
+  assert.match(documentReadyExpression, /waiting-for-codex-shell/);
+  assert.match(documentReadyExpression, /bootstrapObserver/);
+  assert.doesNotThrow(() => new Function(documentReadyExpression));
 });

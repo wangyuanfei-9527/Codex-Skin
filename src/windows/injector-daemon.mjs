@@ -2,8 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { validateBundle } from '../bundle-validator.mjs';
 import { exists, writeJsonAtomic } from '../io.mjs';
-import { BACKGROUND_PLACEHOLDER, ICONS_PLACEHOLDER, PET_PLACEHOLDER, codexNativeTokenCss } from '../theme-compiler.mjs';
-import { buildInjectionExpression, evaluateTarget, listPageTargets } from './cdp.mjs';
+import { BACKGROUND_PLACEHOLDER, ICONS_PLACEHOLDER, PET_PLACEHOLDER, codexNativeTokenCss, codexRuntimePatchCss } from '../theme-compiler.mjs';
+import { buildDocumentReadyExpression, buildInjectionExpression, listPageTargets, prepareTarget } from './cdp.mjs';
 
 function option(name) {
   const index = process.argv.indexOf(name);
@@ -31,7 +31,7 @@ async function main() {
   const rawCss = await fs.readFile(bundle.cssPath, 'utf8');
   const petDataUrl = bundle.pet ? await dataUrl(bundle.pet.spritesheetPath) : '';
   const iconsDataUrl = bundle.iconsPath ? await dataUrl(bundle.iconsPath) : '';
-  const css = `${rawCss}\n${codexNativeTokenCss(bundle.design.palette)}`
+  const css = `${rawCss}\n${codexNativeTokenCss(bundle.design.palette)}\n${codexRuntimePatchCss(bundle.design)}`
     .replaceAll(BACKGROUND_PLACEHOLDER, await dataUrl(bundle.backgroundPath))
     .replaceAll(ICONS_PLACEHOLDER, iconsDataUrl)
     .replaceAll(PET_PLACEHOLDER, petDataUrl);
@@ -46,19 +46,31 @@ async function main() {
     layout: bundle.design.effects.layout,
     petName: bundle.manifest.pet?.name || null,
   });
+  const documentReadyExpression = buildDocumentReadyExpression(expression);
   await writeJsonAtomic(runtimeState, { status: 'running', pid: process.pid, port, bundleId: bundle.manifest.id, startedAt: new Date().toISOString() });
 
   let failures = 0;
+  const preparedTargets = new Set();
   while (await exists(path.join(active, 'manifest.json'))) {
     try {
       const targets = await listPageTargets(port);
-      for (const target of targets) await evaluateTarget(target.webSocketDebuggerUrl, expression);
+      const liveTargets = new Set();
+      for (const target of targets) {
+        const targetKey = target.id || target.webSocketDebuggerUrl;
+        liveTargets.add(targetKey);
+        if (preparedTargets.has(targetKey)) continue;
+        await prepareTarget(target.webSocketDebuggerUrl, documentReadyExpression);
+        preparedTargets.add(targetKey);
+      }
+      for (const targetKey of preparedTargets) {
+        if (!liveTargets.has(targetKey)) preparedTargets.delete(targetKey);
+      }
       failures = 0;
     } catch (error) {
       failures += 1;
       if (failures >= 15) throw error;
     }
-    await new Promise((resolve) => setTimeout(resolve, 2_000));
+    await new Promise((resolve) => setTimeout(resolve, 250));
   }
   await writeJsonAtomic(runtimeState, { status: 'stopped', pid: process.pid, stoppedAt: new Date().toISOString() });
 }
