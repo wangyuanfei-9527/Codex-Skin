@@ -78,6 +78,7 @@ export function buildInjectionExpression(payload) {
     const clear = () => {
       root?.classList.remove('codex-skin-studio-active');
       root?.classList.remove('skin-layout-banner', 'skin-layout-fullscreen');
+      shellMain?.classList.remove('skin-settings-shell');
       document.querySelectorAll('.codex-skin-home').forEach(node => node.classList.remove('codex-skin-home'));
       document.querySelectorAll('.skin-home-shell').forEach(node => node.classList.remove('skin-home-shell'));
       document.querySelectorAll('.skin-new-task').forEach(node => node.classList.remove('skin-new-task'));
@@ -141,6 +142,7 @@ export function buildInjectionExpression(payload) {
       ['修复问题', 'Fix an issue', 'Fix issues'],
     ];
     const newTaskLabels = ['新建任务', 'New task'];
+    const settingsReturnLabels = ['返回应用', 'Back to app'];
     const railActionLabels = ['创建文件或站点', '附加文件或连接应用', 'Create file or site', 'Attach files or connect apps'];
     const applyCardCopy = (button, index) => {
       const title = payload.cardTitles?.[index];
@@ -196,6 +198,11 @@ export function buildInjectionExpression(payload) {
       document.querySelectorAll('.skin-thread-header, .skin-thread-header-layout, .skin-thread-title-row, .skin-thread-title, .skin-thread-actions, .skin-thread-location-group, .skin-window-topbar, .skin-rail-section-header, .skin-rail-action').forEach(node => {
         node.classList.remove('skin-thread-header', 'skin-thread-header-layout', 'skin-thread-title-row', 'skin-thread-title', 'skin-thread-actions', 'skin-thread-location-group', 'skin-window-topbar', 'skin-rail-section-header', 'skin-rail-action');
       });
+      const settingsVisible = settingsReturnLabels.some(label => (shellSidebar.textContent || '').includes(label));
+      const settingsContent = settingsVisible
+        ? shellMain.querySelector('.scrollbar-stable.flex-1.overflow-y-auto.p-panel')
+        : null;
+      shellMain.classList.toggle('skin-settings-shell', Boolean(settingsContent));
       document.querySelector('[class~="group/application-menu-top-bar"]')?.classList.add('skin-window-topbar');
       for (const button of document.querySelectorAll('button[aria-label]')) {
         const label = button.getAttribute('aria-label') || '';

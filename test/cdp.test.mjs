@@ -26,6 +26,8 @@ test('marks the real suggestion cards and keeps their labels whitespace tolerant
   assert.match(expression, /skin-thread-actions/);
   assert.match(expression, /skin-thread-location-group/);
   assert.match(expression, /Open location/);
+  assert.match(expression, /skin-settings-shell/);
+  assert.match(expression, /Back to app/);
   assert.match(expression, /skin-window-topbar/);
   assert.match(expression, /skin-rail-action/);
   assert.match(expression, /refreshPageContext/);

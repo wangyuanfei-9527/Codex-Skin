@@ -151,6 +151,43 @@ export function codexRuntimePatchCss(design) {
   color: inherit !important;
   opacity: 1 !important;
 }
+:root.codex-skin-studio-active main.skin-settings-shell {
+  color: ${p.text} !important;
+}
+:root.codex-skin-studio-active main.skin-settings-shell [class~="rounded-2xl"][class~="border-token-border"] {
+  color: ${p.text} !important;
+  background-color: ${hexRgba(p.surfaceAlt, 0.82)} !important;
+  border-color: ${hexRgba(p.border, 0.62)} !important;
+  box-shadow: 0 12px 34px ${hexRgba(p.background, 0.16)}, inset 0 1px ${hexRgba(p.text, 0.035)} !important;
+}
+:root.codex-skin-studio-active main.skin-settings-shell [class~="rounded-2xl"][class~="border-token-border"] [class~="text-token-text-primary"] {
+  color: ${hexRgba(p.text, 0.96)} !important;
+}
+:root.codex-skin-studio-active main.skin-settings-shell [class~="rounded-2xl"][class~="border-token-border"] [class~="text-token-text-secondary"],
+:root.codex-skin-studio-active main.skin-settings-shell [class~="rounded-2xl"][class~="border-token-border"] [class~="text-token-text-tertiary"] {
+  color: ${hexRgba(p.mutedText, 0.88)} !important;
+}
+:root.codex-skin-studio-active .skin-settings-shell button[class~="bg-token-bg-fog"] {
+  color: ${hexRgba(p.text, 0.94)} !important;
+  background-color: ${hexRgba(p.background, 0.62)} !important;
+  background-image: none !important;
+  border-color: ${hexRgba(p.border, 0.72)} !important;
+}
+:root.codex-skin-studio-active .skin-settings-shell button[class~="bg-token-bg-fog"] * {
+  color: inherit !important;
+  opacity: 1 !important;
+}
+:root.codex-skin-studio-active .skin-settings-shell button[role="switch"] > span[data-state="checked"] {
+  background-color: ${p.accent} !important;
+}
+:root.codex-skin-studio-active .skin-settings-shell button[role="switch"] > span[data-state="unchecked"] {
+  background-color: ${hexRgba(p.border, 0.74)} !important;
+}
+:root.codex-skin-studio-active .skin-settings-shell button[role="switch"] > span > span {
+  color: ${p.text} !important;
+  background-color: ${p.text} !important;
+  border-color: ${hexRgba(p.text, 0.76)} !important;
+}
 :root.codex-skin-studio-active .skin-window-topbar {
   color: ${p.text} !important;
   background: linear-gradient(90deg, ${hexRgba(p.background, 0.96)}, ${hexRgba(p.surfaceAlt, 0.80)}) !important;

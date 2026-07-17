@@ -24,8 +24,8 @@ using Microsoft.Win32;
 [assembly: AssemblyDescription("Local-first Codex theme and pet studio")]
 [assembly: AssemblyCompany("Codex Skin Studio contributors")]
 [assembly: AssemblyProduct("Codex Skin Studio")]
-[assembly: AssemblyVersion("0.7.4.0")]
-[assembly: AssemblyFileVersion("0.7.4.0")]
+[assembly: AssemblyVersion("0.7.5.0")]
+[assembly: AssemblyFileVersion("0.7.5.0")]
 
 namespace CodexSkinStudio
 {
@@ -68,7 +68,7 @@ namespace CodexSkinStudio
 
     internal static class RuntimeBootstrap
     {
-        private const string Version = "0.7.4";
+        private const string Version = "0.7.5";
 
         public static RuntimeFiles Ensure()
         {

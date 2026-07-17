@@ -30,6 +30,8 @@ test('runtime patch upgrades historical themes without regeneration', () => {
   assert.match(css, /skin-thread-actions/);
   assert.match(css, /button\[class~="bg-token-bg-fog"\]/);
   assert.match(css, /skin-thread-location-group/);
+  assert.match(css, /main\.skin-settings-shell \[class~="rounded-2xl"\]\[class~="border-token-border"\]/);
+  assert.match(css, /button\[role="switch"\]/);
   assert.match(css, /skin-window-topbar/);
   assert.match(css, /skin-rail-section-header/);
   assert.match(css, /position: fixed !important/);
