@@ -59,10 +59,10 @@
           "type": "array",
           "minItems": 4,
           "maxItems": 4,
-          "items": { "type": "string", "minLength": 1, "maxLength": 42 }
+          "items": { "type": "string", "minLength": 1, "maxLength": 36 }
         },
         "profileBadge": { "type": "string", "minLength": 1, "maxLength": 10 },
-        "signature": { "type": "string", "minLength": 1, "maxLength": 32 }
+        "signature": { "type": "string", "minLength": 1, "maxLength": 26 }
       }
     },
     "assets": {
@@ -70,15 +70,15 @@
       "additionalProperties": false,
       "required": ["subject", "motifs", "heroPrompt", "iconPrompt"],
       "properties": {
-        "subject": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "subject": { "type": "string", "minLength": 1, "maxLength": 100 },
         "motifs": {
           "type": "array",
           "minItems": 3,
           "maxItems": 4,
-          "items": { "type": "string", "minLength": 1, "maxLength": 48 }
+          "items": { "type": "string", "minLength": 1, "maxLength": 40 }
         },
-        "heroPrompt": { "type": "string", "minLength": 1, "maxLength": 1200 },
-        "iconPrompt": { "type": "string", "minLength": 1, "maxLength": 700 }
+        "heroPrompt": { "type": "string", "minLength": 1, "maxLength": 1050, "pattern": "[.!?。！？][\"'”’」』】）》]*\\s*$" },
+        "iconPrompt": { "type": "string", "minLength": 1, "maxLength": 650, "pattern": "[.!?。！？][\"'”’」』】）》]*\\s*$" }
       }
     }
   },

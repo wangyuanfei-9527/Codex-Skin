@@ -65,5 +65,5 @@ jobs:
             "${{ steps.package.outputs.checksum }}" `
             --verify-tag `
             --latest `
-            --title "Codex Skin Studio $tag" `
+            --title "$tag" `
             --notes-file $notes

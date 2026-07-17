@@ -19,7 +19,15 @@ test('marks the real suggestion cards and keeps their labels whitespace tolerant
   const expression = buildInjectionExpression({ bundleId: 'test', css: 'body{}', reviewDiffCss: ':host{}' });
   assert.match(expression, /group\/home-suggestions/);
   assert.match(expression, /data-skin-suggestion-index/);
-  assert.match(expression, /skin-card-copy/);
+  assert.match(expression, /nativeSuggestionButtons/);
+  assert.match(expression, /skin-action-deck/);
+  assert.match(expression, /skin-action-card/);
+  assert.match(expression, /button\.onclick/);
+  assert.match(expression, /\.ProseMirror\[contenteditable="true"\]/);
+  assert.match(expression, /new ClipboardEvent\('paste'/);
+  assert.match(expression, /transfer\.setData\('text\/plain'/);
+  assert.doesNotMatch(expression, /editor\.textContent\s*=/);
+  assert.doesNotMatch(expression, /button\.appendChild\(copy\)/);
   assert.match(expression, /skin-project-toolbar/);
   assert.match(expression, /skin-thread-header/);
   assert.match(expression, /skin-thread-title/);

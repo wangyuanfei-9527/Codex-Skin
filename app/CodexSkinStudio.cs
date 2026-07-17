@@ -16,6 +16,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
+using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
 using System.Windows.Shell;
 using System.Xml;
@@ -25,8 +26,8 @@ using Microsoft.Win32;
 [assembly: AssemblyDescription("Local-first Codex theme and pet studio")]
 [assembly: AssemblyCompany("Codex Skin Studio contributors")]
 [assembly: AssemblyProduct("Codex Skin Studio")]
-[assembly: AssemblyVersion("0.7.9.0")]
-[assembly: AssemblyFileVersion("0.7.9.0")]
+[assembly: AssemblyVersion("0.7.10.0")]
+[assembly: AssemblyFileVersion("0.7.10.0")]
 
 namespace CodexSkinStudio
 {
@@ -40,7 +41,7 @@ namespace CodexSkinStudio
             {
                 if (!created)
                 {
-                    MessageBox.Show("Codex Skin Studio 已经在运行。", "Codex Skin Studio", MessageBoxButton.OK, MessageBoxImage.Information);
+                    StudioDialog.Show(null, "Codex Skin Studio", "工作台已经在运行，无需重复打开。", StudioDialogTone.Info, "知道了", null, false);
                     return;
                 }
 
@@ -54,7 +55,7 @@ namespace CodexSkinStudio
                 }
                 catch (Exception error)
                 {
-                    MessageBox.Show("应用启动失败：\n\n" + error.Message, "Codex Skin Studio", MessageBoxButton.OK, MessageBoxImage.Error);
+                    StudioDialog.Show(null, "应用启动失败", error.Message, StudioDialogTone.Error, "关闭", null, false);
                 }
             }
         }
@@ -69,7 +70,7 @@ namespace CodexSkinStudio
 
     internal static class RuntimeBootstrap
     {
-        private const string Version = "0.7.9";
+        private const string Version = "0.7.10";
 
         public static RuntimeFiles Ensure()
         {
@@ -148,8 +149,247 @@ namespace CodexSkinStudio
         public string StandardError { get; set; }
     }
 
+    internal sealed class CodexCliUnavailableException : Exception
+    {
+        public CodexCliUnavailableException(string message) : base(message) { }
+    }
+
+    internal enum StudioDialogTone
+    {
+        Info,
+        Warning,
+        Error,
+        Danger
+    }
+
+    internal static class StudioDialog
+    {
+        private static Brush ResourceBrush(Window owner, string key, string fallback)
+        {
+            object value = owner != null ? owner.TryFindResource(key) : null;
+            if (value == null && Application.Current != null && Application.Current.MainWindow != null)
+                value = Application.Current.MainWindow.TryFindResource(key);
+            Brush brush = value as Brush;
+            return brush ?? (Brush)new BrushConverter().ConvertFromString(fallback);
+        }
+
+        private static Brush SoftBrush(Brush source)
+        {
+            SolidColorBrush solid = source as SolidColorBrush;
+            if (solid == null) return source;
+            Color color = solid.Color;
+            return new SolidColorBrush(Color.FromArgb(35, color.R, color.G, color.B));
+        }
+
+        private static ControlTemplate ButtonTemplate()
+        {
+            var template = new ControlTemplate(typeof(Button));
+            var chrome = new FrameworkElementFactory(typeof(Border), "Chrome");
+            chrome.SetValue(Border.CornerRadiusProperty, new CornerRadius(9));
+            chrome.SetValue(Border.BackgroundProperty, new TemplateBindingExtension(Control.BackgroundProperty));
+            chrome.SetValue(Border.BorderBrushProperty, new TemplateBindingExtension(Control.BorderBrushProperty));
+            chrome.SetValue(Border.BorderThicknessProperty, new TemplateBindingExtension(Control.BorderThicknessProperty));
+            chrome.SetValue(Border.PaddingProperty, new TemplateBindingExtension(Control.PaddingProperty));
+            var content = new FrameworkElementFactory(typeof(ContentPresenter));
+            content.SetValue(ContentPresenter.ContentProperty, new TemplateBindingExtension(ContentControl.ContentProperty));
+            content.SetValue(ContentPresenter.ContentTemplateProperty, new TemplateBindingExtension(ContentControl.ContentTemplateProperty));
+            content.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+            content.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+            chrome.AppendChild(content);
+            template.VisualTree = chrome;
+
+            var hover = new Trigger { Property = UIElement.IsMouseOverProperty, Value = true };
+            hover.Setters.Add(new Setter(UIElement.OpacityProperty, 0.86));
+            template.Triggers.Add(hover);
+            var pressed = new Trigger { Property = Button.IsPressedProperty, Value = true };
+            pressed.Setters.Add(new Setter(UIElement.OpacityProperty, 0.7));
+            template.Triggers.Add(pressed);
+            var disabled = new Trigger { Property = UIElement.IsEnabledProperty, Value = false };
+            disabled.Setters.Add(new Setter(UIElement.OpacityProperty, 0.42));
+            template.Triggers.Add(disabled);
+            return template;
+        }
+
+        public static Button CreateButton(Window paletteOwner, string text, bool primary, bool dangerous)
+        {
+            Brush background = primary
+                ? ResourceBrush(paletteOwner, dangerous ? "Danger" : "Accent", dangerous ? "#B84E57" : "#D97928")
+                : ResourceBrush(paletteOwner, "Raised", "#FBF9F5");
+            Brush border = primary
+                ? ResourceBrush(paletteOwner, dangerous ? "Danger" : "Accent", dangerous ? "#B84E57" : "#D97928")
+                : ResourceBrush(paletteOwner, "Border", "#D8D2C8");
+            return new Button
+            {
+                Content = text,
+                MinWidth = 96,
+                Height = 40,
+                Padding = new Thickness(16, 8, 16, 8),
+                FontFamily = new FontFamily("Microsoft YaHei UI"),
+                FontSize = 12.5,
+                FontWeight = FontWeights.SemiBold,
+                Cursor = Cursors.Hand,
+                Foreground = ResourceBrush(paletteOwner, primary ? "AccentText" : "Text", primary ? "#FCF7EF" : "#27231F"),
+                Background = background,
+                BorderBrush = border,
+                BorderThickness = new Thickness(1),
+                Template = ButtonTemplate()
+            };
+        }
+
+        public static bool Show(Window owner, string title, string message, StudioDialogTone tone, string primaryText, string secondaryText, bool dangerous)
+        {
+            Brush background = ResourceBrush(owner, "AppBackground", "#F7F5F1");
+            Brush panel = ResourceBrush(owner, "Panel", "#F2EFE9");
+            Brush border = ResourceBrush(owner, "Border", "#D8D2C8");
+            Brush text = ResourceBrush(owner, "Text", "#27231F");
+            Brush toneBrush = tone == StudioDialogTone.Info
+                ? ResourceBrush(owner, "Teal", "#187B70")
+                : tone == StudioDialogTone.Warning
+                    ? ResourceBrush(owner, "Accent", "#D97928")
+                    : ResourceBrush(owner, "Danger", "#B84E57");
+            string glyph = tone == StudioDialogTone.Info ? "i" : tone == StudioDialogTone.Error ? "×" : "!";
+
+            var dialog = new Window
+            {
+                Title = title,
+                Width = 500,
+                SizeToContent = SizeToContent.Height,
+                MaxHeight = 640,
+                WindowStartupLocation = owner != null ? WindowStartupLocation.CenterOwner : WindowStartupLocation.CenterScreen,
+                WindowStyle = WindowStyle.None,
+                ResizeMode = ResizeMode.NoResize,
+                AllowsTransparency = true,
+                Background = Brushes.Transparent,
+                ShowInTaskbar = owner == null,
+                FontFamily = new FontFamily("Microsoft YaHei UI")
+            };
+            if (owner != null && owner.IsVisible) dialog.Owner = owner;
+
+            var frame = new Border
+            {
+                Background = background,
+                BorderBrush = border,
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(15),
+                Margin = new Thickness(16),
+                Effect = new DropShadowEffect { BlurRadius = 28, ShadowDepth = 8, Opacity = 0.28, Color = Colors.Black }
+            };
+            var shell = new DockPanel();
+            frame.Child = shell;
+            dialog.Content = frame;
+
+            var header = new Grid { Margin = new Thickness(24, 20, 16, 0), Background = Brushes.Transparent };
+            header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            header.Children.Add(new TextBlock
+            {
+                Text = title,
+                Foreground = text,
+                FontSize = 17,
+                FontWeight = FontWeights.SemiBold,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            Button close = CreateButton(owner, "×", false, false);
+            close.Width = 34;
+            close.MinWidth = 34;
+            close.Height = 34;
+            close.Padding = new Thickness(0);
+            close.Background = Brushes.Transparent;
+            close.BorderBrush = Brushes.Transparent;
+            close.FontSize = 17;
+            Grid.SetColumn(close, 1);
+            header.Children.Add(close);
+            DockPanel.SetDock(header, Dock.Top);
+            shell.Children.Add(header);
+
+            var body = new Grid { Margin = new Thickness(24, 18, 28, 24) };
+            body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(48) });
+            body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            var icon = new Border
+            {
+                Width = 36,
+                Height = 36,
+                CornerRadius = new CornerRadius(18),
+                Background = SoftBrush(toneBrush),
+                BorderBrush = toneBrush,
+                BorderThickness = new Thickness(1),
+                VerticalAlignment = VerticalAlignment.Top,
+                Child = new TextBlock
+                {
+                    Text = glyph,
+                    Foreground = toneBrush,
+                    FontFamily = new FontFamily("Segoe UI"),
+                    FontSize = 18,
+                    FontWeight = FontWeights.Bold,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center
+                }
+            };
+            body.Children.Add(icon);
+            var copy = new TextBlock
+            {
+                Text = message,
+                Foreground = text,
+                FontSize = 12.5,
+                LineHeight = 21,
+                TextWrapping = TextWrapping.Wrap,
+                VerticalAlignment = VerticalAlignment.Top
+            };
+            Grid.SetColumn(copy, 1);
+            body.Children.Add(copy);
+
+            var footer = new Border
+            {
+                Background = panel,
+                BorderBrush = border,
+                BorderThickness = new Thickness(0, 1, 0, 0),
+                CornerRadius = new CornerRadius(0, 0, 15, 15),
+                Padding = new Thickness(24, 14, 24, 16)
+            };
+            var actions = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+            footer.Child = actions;
+            DockPanel.SetDock(footer, Dock.Bottom);
+            shell.Children.Add(footer);
+            shell.Children.Add(body);
+
+            Button secondary = null;
+            if (!String.IsNullOrWhiteSpace(secondaryText))
+            {
+                secondary = CreateButton(owner, secondaryText, false, false);
+                secondary.Margin = new Thickness(0, 0, 10, 0);
+                secondary.IsCancel = true;
+                secondary.Click += delegate { dialog.DialogResult = false; };
+                actions.Children.Add(secondary);
+            }
+            Button primary = CreateButton(owner, primaryText, true, dangerous);
+            primary.IsDefault = secondary == null || !dangerous;
+            primary.Click += delegate { dialog.DialogResult = true; };
+            actions.Children.Add(primary);
+
+            close.Click += delegate { dialog.DialogResult = false; };
+            header.MouseLeftButtonDown += delegate(object sender, MouseButtonEventArgs eventArgs)
+            {
+                if (eventArgs.ChangedButton == MouseButton.Left) dialog.DragMove();
+            };
+            dialog.Loaded += delegate
+            {
+                if (dangerous && secondary != null) secondary.Focus();
+                else primary.Focus();
+            };
+            return dialog.ShowDialog() == true;
+        }
+    }
+
     internal sealed class StudioController
     {
+        private sealed class CliFailure
+        {
+            public string Code { get; set; }
+            public string Message { get; set; }
+        }
+
+        private const string CodexCliUrl = "https://developers.openai.com/codex/cli/";
+        private const string ReleasesUrl = "https://github.com/wangyuanfei-9527/Codex-Skin/releases/latest";
         private readonly RuntimeFiles runtime;
         private readonly ObservableCollection<ReferenceItem> references = new ObservableCollection<ReferenceItem>();
         private readonly ObservableCollection<ThemeLibraryItem> themeLibrary = new ObservableCollection<ThemeLibraryItem>();
@@ -204,6 +444,7 @@ namespace CodexSkinStudio
         private Button libraryCustomizeCopyButton;
         private Button refreshLibraryButton;
         private Button deleteLibraryButton;
+        private Button updateButton;
         private Button studioThemeButton;
         private Button minimizeButton;
         private Button maximizeButton;
@@ -410,7 +651,7 @@ namespace CodexSkinStudio
   <Grid>
     <Grid.RowDefinitions><RowDefinition Height='62'/><RowDefinition Height='*'/><RowDefinition Height='34'/></Grid.RowDefinitions>
     <Border Grid.Row='0' Background='{DynamicResource TopBar}' BorderBrush='{DynamicResource Border}' BorderThickness='0,0,0,1'>
-      <Grid Margin='20,0,0,0'><Grid.ColumnDefinitions><ColumnDefinition Width='*'/><ColumnDefinition Width='Auto'/><ColumnDefinition Width='Auto'/><ColumnDefinition Width='Auto'/></Grid.ColumnDefinitions>
+      <Grid Margin='20,0,0,0'><Grid.ColumnDefinitions><ColumnDefinition Width='*'/><ColumnDefinition Width='Auto'/><ColumnDefinition Width='Auto'/><ColumnDefinition Width='Auto'/><ColumnDefinition Width='Auto'/></Grid.ColumnDefinitions>
         <StackPanel Orientation='Horizontal' VerticalAlignment='Center'>
           <StackPanel VerticalAlignment='Center'>
             <TextBlock Text='Codex Skin Studio' FontSize='15' FontWeight='SemiBold'/>
@@ -420,8 +661,9 @@ namespace CodexSkinStudio
         <Border Grid.Column='1' Background='{DynamicResource StatusBackground}' BorderBrush='{DynamicResource StatusBorder}' BorderThickness='1' CornerRadius='14' Padding='11,6' VerticalAlignment='Center'>
           <StackPanel Orientation='Horizontal'><Ellipse Width='7' Height='7' Fill='{DynamicResource Teal}' Margin='0,0,7,0'/><TextBlock x:Name='RuntimeText' Text='正在检查本地 Codex' FontSize='11' Foreground='{DynamicResource StatusText}'/></StackPanel>
         </Border>
-        <Button x:Name='StudioThemeButton' Grid.Column='2' Content='☾  暗色模式' Style='{StaticResource StudioButton}' Padding='11,7' Margin='12,0' VerticalAlignment='Center' FontSize='11.5'/>
-        <StackPanel Grid.Column='3' Orientation='Horizontal'>
+        <Button x:Name='UpdateButton' Grid.Column='2' Content='检查更新' ToolTip='打开发布页获取最新便携版' Style='{StaticResource StudioButton}' Padding='11,7' Margin='12,0,0,0' VerticalAlignment='Center' FontSize='11.5'/>
+        <Button x:Name='StudioThemeButton' Grid.Column='3' Content='☾  暗色模式' Style='{StaticResource StudioButton}' Padding='11,7' Margin='8,0,12,0' VerticalAlignment='Center' FontSize='11.5'/>
+        <StackPanel Grid.Column='4' Orientation='Horizontal'>
           <Button x:Name='MinimizeButton' Content='—' ToolTip='最小化' Style='{StaticResource WindowButton}'/>
           <Button x:Name='MaximizeButton' Content='□' ToolTip='最大化' Style='{StaticResource WindowButton}'/>
           <Button x:Name='CloseButton' Content='×' ToolTip='关闭' Style='{StaticResource CloseWindowButton}'/>
@@ -729,6 +971,7 @@ namespace CodexSkinStudio
             libraryCustomizeCopyButton = Find<Button>("LibraryCustomizeCopyButton");
             refreshLibraryButton = Find<Button>("RefreshLibraryButton");
             deleteLibraryButton = Find<Button>("DeleteLibraryButton");
+            updateButton = Find<Button>("UpdateButton");
             studioThemeButton = Find<Button>("StudioThemeButton");
             minimizeButton = Find<Button>("MinimizeButton");
             maximizeButton = Find<Button>("MaximizeButton");
@@ -760,6 +1003,7 @@ namespace CodexSkinStudio
             libraryCustomizeCopyButton.Click += async delegate { await CustomizeCopyAsync(); };
             refreshLibraryButton.Click += delegate { RefreshThemeLibrary(false); };
             deleteLibraryButton.Click += delegate { DeleteSelectedTheme(); };
+            updateButton.Click += delegate { OpenExternal(ReleasesUrl, "已在浏览器打开更新页面"); };
             studioThemeButton.Click += delegate
             {
                 ApplyStudioTheme(!studioDark);
@@ -773,7 +1017,7 @@ namespace CodexSkinStudio
             };
             closeButton.Click += delegate { Window.Close(); };
             Window.StateChanged += delegate { UpdateMaximizeButton(); };
-            foreach (Button button in new[] { studioThemeButton, minimizeButton, maximizeButton, closeButton })
+            foreach (Button button in new[] { updateButton, studioThemeButton, minimizeButton, maximizeButton, closeButton })
                 WindowChrome.SetIsHitTestVisibleInChrome(button, true);
             presetBox.SelectionChanged += delegate
             {
@@ -979,13 +1223,25 @@ namespace CodexSkinStudio
                 else
                 {
                     runtimeText.Text = "本地 Codex 需要处理";
-                    SetStatus(UsefulError(result));
+                    CliFailure failure = ParseCliFailure(result);
+                    if (IsCodexCliUnavailable(failure.Code, failure.Message))
+                    {
+                        SetStatus("需要安装或修复 Codex CLI");
+                        ShowCodexCliDownload();
+                    }
+                    else if (result.StandardOutput.IndexOf("\"authenticated\": false", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        SetStatus("Codex CLI 尚未登录");
+                        ShowCodexCliSignIn();
+                    }
+                    else SetStatus(failure.Message);
                 }
             }
             catch (Exception error)
             {
                 runtimeText.Text = "本地 Codex 暂不可用";
                 SetStatus("运行环境检查失败：" + error.Message);
+                ShowOperationError("运行环境检查失败", error);
             }
             finally
             {
@@ -998,13 +1254,15 @@ namespace CodexSkinStudio
             if (busy) return;
             if (references.Count == 0)
             {
-                MessageBox.Show(Window, "请先加入至少一张参考图片。", "缺少素材", MessageBoxButton.OK, MessageBoxImage.Information);
+                bool chooseImage = StudioDialog.Show(Window, "缺少参考图片", "请先添加一张 PNG、JPEG 或 WebP 图片，再开始生成主题。", StudioDialogTone.Info, "选择图片", "取消", false);
+                if (chooseImage) ChooseImages();
                 return;
             }
             string brief = briefBox.Text.Trim();
             if (brief.Length < 8)
             {
-                MessageBox.Show(Window, "请再多描述一点你想要的主题皮肤。", "需求太短", MessageBoxButton.OK, MessageBoxImage.Information);
+                StudioDialog.Show(Window, "再补充一点创作方向", "请描述想要的配色、材质、光线或氛围，至少输入 8 个字符。", StudioDialogTone.Info, "继续编辑", null, false);
+                briefBox.Focus();
                 return;
             }
 
@@ -1057,7 +1315,7 @@ namespace CodexSkinStudio
                 monitorCancellation.Cancel();
                 try { await monitor; } catch (OperationCanceledException) { }
                 monitorCancellation.Dispose();
-                if (generated.ExitCode != 0) throw new InvalidOperationException(UsefulError(generated));
+                ThrowForCliFailure(generated);
                 Dictionary<string, object> response = json.DeserializeObject(generated.StandardOutput) as Dictionary<string, object>;
                 if (response == null || !response.ContainsKey("bundle")) throw new InvalidOperationException("生成完成，但没有返回可用的主题包。请查看本地 Codex 状态后重试。");
                 currentBundle = Convert.ToString(response["bundle"]);
@@ -1082,7 +1340,7 @@ namespace CodexSkinStudio
                 else
                 {
                     SetStatus(error.Message);
-                    MessageBox.Show(Window, error.Message, "生成失败", MessageBoxButton.OK, MessageBoxImage.Error);
+                    ShowOperationError("生成失败", error);
                 }
             }
             finally
@@ -1256,16 +1514,32 @@ namespace CodexSkinStudio
                 MinWidth = 620,
                 MinHeight = 620,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                Background = (Brush)Window.Resources["AppBackground"],
+                WindowStyle = WindowStyle.None,
+                ResizeMode = ResizeMode.NoResize,
+                AllowsTransparency = true,
+                Background = Brushes.Transparent,
                 Foreground = (Brush)Window.Resources["Text"],
                 FontFamily = new FontFamily("Microsoft YaHei UI")
             };
+            var editorFrame = new Border
+            {
+                Background = (Brush)Window.Resources["AppBackground"],
+                BorderBrush = (Brush)Window.Resources["Border"],
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(15),
+                Margin = new Thickness(14),
+                Effect = new DropShadowEffect { BlurRadius = 28, ShadowDepth = 8, Opacity = 0.28, Color = Colors.Black }
+            };
             var shell = new DockPanel { Margin = new Thickness(22) };
-            editor.Content = shell;
+            editorFrame.Child = shell;
+            editor.Content = editorFrame;
 
-            var header = new StackPanel { Margin = new Thickness(0, 0, 0, 16) };
-            header.Children.Add(new TextBlock { Text = "自定义主题文案", FontSize = 20, FontWeight = FontWeights.SemiBold });
-            header.Children.Add(new TextBlock
+            var header = new Grid { Margin = new Thickness(0, 0, 0, 16), Background = Brushes.Transparent };
+            header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            var headerCopy = new StackPanel();
+            headerCopy.Children.Add(new TextBlock { Text = "自定义主题文案", FontSize = 20, FontWeight = FontWeights.SemiBold });
+            headerCopy.Children.Add(new TextBlock
             {
                 Text = "顶部品牌、主视觉标题、右上签名和四张功能卡片均可独立修改。保存后会生成新的主题版本、立即应用并重启 Codex。",
                 FontSize = 11,
@@ -1273,6 +1547,22 @@ namespace CodexSkinStudio
                 Foreground = (Brush)Window.Resources["Muted"],
                 Margin = new Thickness(0, 6, 0, 0)
             });
+            header.Children.Add(headerCopy);
+            Button editorClose = StudioDialog.CreateButton(Window, "×", false, false);
+            editorClose.Width = 36;
+            editorClose.MinWidth = 36;
+            editorClose.Height = 36;
+            editorClose.Padding = new Thickness(0);
+            editorClose.Background = Brushes.Transparent;
+            editorClose.BorderBrush = Brushes.Transparent;
+            editorClose.FontSize = 17;
+            Grid.SetColumn(editorClose, 1);
+            header.Children.Add(editorClose);
+            editorClose.Click += delegate { editor.DialogResult = false; };
+            header.MouseLeftButtonDown += delegate(object sender, MouseButtonEventArgs eventArgs)
+            {
+                if (eventArgs.ChangedButton == MouseButton.Left) editor.DragMove();
+            };
             DockPanel.SetDock(header, Dock.Top);
             shell.Children.Add(header);
 
@@ -1288,28 +1578,15 @@ namespace CodexSkinStudio
                 VerticalAlignment = VerticalAlignment.Center
             };
             footer.Children.Add(note);
-            var cancel = new Button
-            {
-                Content = "取消",
-                MinWidth = 88,
-                Padding = new Thickness(14, 7, 14, 7),
-                Margin = new Thickness(10, 0, 0, 0),
-                Background = (Brush)Window.Resources["Raised"],
-                Foreground = (Brush)Window.Resources["Text"],
-                BorderBrush = (Brush)Window.Resources["Border"]
-            };
+            Button cancel = StudioDialog.CreateButton(Window, "取消", false, false);
+            cancel.Margin = new Thickness(10, 0, 0, 0);
+            cancel.IsCancel = true;
             Grid.SetColumn(cancel, 1);
             footer.Children.Add(cancel);
-            var save = new Button
-            {
-                Content = "保存并应用",
-                MinWidth = 116,
-                Padding = new Thickness(14, 7, 14, 7),
-                Margin = new Thickness(10, 0, 0, 0),
-                Background = (Brush)Window.Resources["Accent"],
-                Foreground = (Brush)Window.Resources["AccentText"],
-                BorderBrush = (Brush)Window.Resources["Accent"]
-            };
+            Button save = StudioDialog.CreateButton(Window, "保存并应用", true, false);
+            save.MinWidth = 116;
+            save.Margin = new Thickness(10, 0, 0, 0);
+            save.IsDefault = true;
             Grid.SetColumn(save, 2);
             footer.Children.Add(save);
             DockPanel.SetDock(footer, Dock.Bottom);
@@ -1357,7 +1634,7 @@ namespace CodexSkinStudio
                 if (invalid != null)
                 {
                     invalid.Focus();
-                    MessageBox.Show(editor, "所有文案都需要填写；可以保留原文字，但不能留空。", "文案未完成", MessageBoxButton.OK, MessageBoxImage.Information);
+                    StudioDialog.Show(editor, "文案尚未完成", "所有文案都需要填写。可以保留原文字，但不能留空。", StudioDialogTone.Info, "返回修改", null, false);
                     return;
                 }
                 editor.DialogResult = true;
@@ -1390,7 +1667,7 @@ namespace CodexSkinStudio
             }
             catch (Exception error)
             {
-                MessageBox.Show(Window, error.Message, "读取主题文案失败", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowOperationError("读取主题文案失败", error);
                 return;
             }
             if (changes == null) return;
@@ -1409,7 +1686,7 @@ namespace CodexSkinStudio
                 File.WriteAllText(copyFile, json.Serialize(changes), new UTF8Encoding(false));
 
                 CliResult customized = await RunCliAsync(new[] { "customize-copy", currentBundle, "--copy-file", copyFile, "--output", output });
-                if (customized.ExitCode != 0) throw new InvalidOperationException(UsefulError(customized));
+                ThrowForCliFailure(customized);
                 Dictionary<string, object> response = json.DeserializeObject(customized.StandardOutput) as Dictionary<string, object>;
                 if (response == null || !response.ContainsKey("bundle")) throw new InvalidOperationException("文案已处理，但没有返回新的主题包。");
                 currentBundle = Convert.ToString(response["bundle"]);
@@ -1418,7 +1695,7 @@ namespace CodexSkinStudio
 
                 SetStatus("自定义文案已保存，正在重新应用主题");
                 CliResult applied = await RunCliAsync(new[] { "apply-skin", currentBundle, "--restart" });
-                if (applied.ExitCode != 0) throw new InvalidOperationException(UsefulError(applied));
+                ThrowForCliFailure(applied);
                 RefreshThemeLibrary(false);
                 stepFour.Text = "自定义文案已持久化并安排重启";
                 bundleText.Text = "文案已应用";
@@ -1427,7 +1704,7 @@ namespace CodexSkinStudio
             catch (Exception error)
             {
                 SetStatus(error.Message);
-                MessageBox.Show(Window, error.Message, "自定义文案失败", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowOperationError("自定义文案失败", error);
             }
             finally
             {
@@ -1551,17 +1828,18 @@ namespace CodexSkinStudio
             {
                 deleteLibraryButton.IsEnabled = false;
                 SetStatus("当前使用中的主题不能删除");
-                MessageBox.Show(Window, "当前主题正在 Codex 中使用。请先应用其他主题或恢复原版，再删除它。", "无法删除", MessageBoxButton.OK, MessageBoxImage.Information);
+                StudioDialog.Show(Window, "当前主题无法删除", "这套主题正在 Codex 中使用。请先应用其他主题或恢复原版，再回来删除。", StudioDialogTone.Info, "知道了", null, false);
                 return;
             }
-            MessageBoxResult answer = MessageBox.Show(
+            bool confirmed = StudioDialog.Show(
                 Window,
-                "确定永久删除“" + selected.Name + "”吗？\n\n只会删除主题库中的本地生成包；当前已经应用到 Codex 的皮肤不会被自动恢复。",
-                "删除主题",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning,
-                MessageBoxResult.No);
-            if (answer != MessageBoxResult.Yes) return;
+                "永久删除主题",
+                "将从本机主题库永久删除“" + selected.Name + "”。\n\n只会删除这套本地主题包，不会影响 Codex 当前使用的其他主题。此操作不可撤销。",
+                StudioDialogTone.Danger,
+                "永久删除",
+                "取消",
+                true);
+            if (!confirmed) return;
 
             try
             {
@@ -1598,7 +1876,7 @@ namespace CodexSkinStudio
             catch (Exception error)
             {
                 SetStatus("删除失败：" + error.Message);
-                MessageBox.Show(Window, error.Message, "删除失败", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowOperationError("删除失败", error);
             }
         }
 
@@ -1718,7 +1996,7 @@ namespace CodexSkinStudio
             try
             {
                 CliResult result = await RunCliAsync(new[] { "apply-skin", currentBundle, "--restart" });
-                if (result.ExitCode != 0) throw new InvalidOperationException(UsefulError(result));
+                ThrowForCliFailure(result);
                 RefreshThemeLibrary(false);
                 stepFour.Text = "Codex 重启与注入已安排";
                 bundleText.Text = "已应用";
@@ -1727,7 +2005,7 @@ namespace CodexSkinStudio
             catch (Exception error)
             {
                 SetStatus(error.Message);
-                MessageBox.Show(Window, error.Message, "应用失败", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowOperationError("应用失败", error);
             }
             finally
             {
@@ -1738,13 +2016,13 @@ namespace CodexSkinStudio
         private async Task RestoreAsync()
         {
             if (busy) return;
-            MessageBoxResult answer = MessageBox.Show(Window, "恢复原版会移除当前皮肤并重启 Codex；已安装宠物不会受影响。继续吗？", "恢复原版", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            if (answer != MessageBoxResult.Yes) return;
+            bool confirmed = StudioDialog.Show(Window, "恢复原版 Codex", "当前皮肤将被移除，Codex 随后会自动重启。主题库和已安装宠物不会受影响。", StudioDialogTone.Warning, "恢复原版", "取消", false);
+            if (!confirmed) return;
             SetBusy(true, "正在恢复原版 Codex");
             try
             {
                 CliResult result = await RunCliAsync(new[] { "restore-skin", "--restart" });
-                if (result.ExitCode != 0) throw new InvalidOperationException(UsefulError(result));
+                ThrowForCliFailure(result);
                 RefreshThemeLibrary(false);
                 bundleText.Text = "已恢复";
                 stepFour.Text = "原版 Codex 重启已安排";
@@ -1753,7 +2031,7 @@ namespace CodexSkinStudio
             catch (Exception error)
             {
                 SetStatus(error.Message);
-                MessageBox.Show(Window, error.Message, "恢复失败", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowOperationError("恢复失败", error);
             }
             finally
             {
@@ -1773,6 +2051,7 @@ namespace CodexSkinStudio
             ThemeLibraryItem selectedTheme = themeLibraryList.SelectedItem as ThemeLibraryItem;
             deleteLibraryButton.IsEnabled = !value && selectedTheme != null && !selectedTheme.IsApplied;
             refreshLibraryButton.IsEnabled = !value;
+            updateButton.IsEnabled = !value;
             themeLibraryList.IsEnabled = !value;
             flowModeButton.IsEnabled = !value;
             libraryModeButton.IsEnabled = !value;
@@ -1916,6 +2195,133 @@ namespace CodexSkinStudio
             result.Append('\\', slashes * 2);
             result.Append('"');
             return result.ToString();
+        }
+
+        private CliFailure ParseCliFailure(CliResult result)
+        {
+            string source = (result.StandardError ?? String.Empty) + "\n" + (result.StandardOutput ?? String.Empty);
+            const string marker = "codex-skin-error: ";
+            int start = source.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+            if (start >= 0)
+            {
+                start += marker.Length;
+                int end = source.IndexOfAny(new[] { '\r', '\n' }, start);
+                string payload = end >= 0 ? source.Substring(start, end - start) : source.Substring(start);
+                try
+                {
+                    Dictionary<string, object> detail = json.DeserializeObject(payload) as Dictionary<string, object>;
+                    if (detail != null)
+                    {
+                        return new CliFailure
+                        {
+                            Code = StringValue(detail, "code", null),
+                            Message = StringValue(detail, "message", UsefulError(result))
+                        };
+                    }
+                }
+                catch (ArgumentException) { }
+                catch (InvalidOperationException) { }
+            }
+            return new CliFailure { Message = UsefulError(result) };
+        }
+
+        private static bool IsCodexCliUnavailable(string code, string message)
+        {
+            if (!String.IsNullOrWhiteSpace(code) && new[]
+            {
+                "CODEX_CLI_NOT_FOUND", "CODEX_CLI_CONFIG_INVALID", "CODEX_CLI_BROKEN", "CODEX_CLI_START_FAILED"
+            }.Contains(code, StringComparer.OrdinalIgnoreCase)) return true;
+            if (String.IsNullOrWhiteSpace(message)) return false;
+            return message.IndexOf("Could not find the local Codex CLI", StringComparison.OrdinalIgnoreCase) >= 0
+                || message.IndexOf("CODEX_SKIN_CODEX does not exist", StringComparison.OrdinalIgnoreCase) >= 0
+                || message.IndexOf("Codex Node entrypoint could not be found", StringComparison.OrdinalIgnoreCase) >= 0
+                || message.IndexOf("Local Codex failed to start", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private void ThrowForCliFailure(CliResult result)
+        {
+            if (result.ExitCode == 0) return;
+            CliFailure failure = ParseCliFailure(result);
+            if (IsCodexCliUnavailable(failure.Code, failure.Message))
+                throw new CodexCliUnavailableException(failure.Message);
+            if (String.Equals(failure.Code, "SPEC_VALIDATION_FAILED", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException(FormatSpecificationFailure(failure.Message));
+            throw new InvalidOperationException(failure.Message);
+        }
+
+        private static string FormatSpecificationFailure(string message)
+        {
+            string detail = message ?? String.Empty;
+            detail = detail.Replace("Generated specification remained invalid after one automatic correction:\n", String.Empty)
+                .Replace("Invalid skin specification:\n", String.Empty)
+                .Replace("Invalid design specification:\n", String.Empty);
+            detail = System.Text.RegularExpressions.Regex.Replace(
+                detail,
+                @"- spec\.assets\.heroPrompt contains (\d+) characters; maximum is (\d+)",
+                "- 主视觉提示词为 $1 个字符，最多允许 $2 个字符。");
+            detail = System.Text.RegularExpressions.Regex.Replace(
+                detail,
+                @"- spec\.assets\.iconPrompt contains (\d+) characters; maximum is (\d+)",
+                "- 图标提示词为 $1 个字符，最多允许 $2 个字符。");
+            detail = System.Text.RegularExpressions.Regex.Replace(
+                detail,
+                @"- spec\.assets\.heroPrompt must end with sentence punctuation[^\r\n]*",
+                "- 主视觉提示词必须以句号、问号或感叹号结束。");
+            detail = System.Text.RegularExpressions.Regex.Replace(
+                detail,
+                @"- spec\.assets\.iconPrompt must end with sentence punctuation[^\r\n]*",
+                "- 图标提示词必须以句号、问号或感叹号结束。");
+            return "主题规划结果已自动重新生成一次，但仍未通过完整性校验。\n\n" + detail.Trim();
+        }
+
+        private void ShowOperationError(string title, Exception error)
+        {
+            CodexCliUnavailableException cliError = error as CodexCliUnavailableException;
+            if (cliError != null || IsCodexCliUnavailable(null, error.Message))
+            {
+                ShowCodexCliDownload();
+                return;
+            }
+            StudioDialog.Show(Window, title, error.Message, StudioDialogTone.Error, "关闭", null, false);
+        }
+
+        private void ShowCodexCliDownload()
+        {
+            bool download = StudioDialog.Show(
+                Window,
+                "需要安装 Codex CLI",
+                "Codex Skin Studio 需要调用本机 Codex CLI 才能生成主题。\n\n请先下载安装并完成登录，然后重新打开工作台。",
+                StudioDialogTone.Warning,
+                "下载 Codex CLI",
+                "稍后处理",
+                false);
+            if (download) OpenExternal(CodexCliUrl, "已在浏览器打开 Codex CLI 下载说明");
+        }
+
+        private void ShowCodexCliSignIn()
+        {
+            bool openGuide = StudioDialog.Show(
+                Window,
+                "Codex CLI 尚未登录",
+                "已经找到 Codex CLI，但当前没有可用的登录状态。请在 PowerShell 运行 codex login，完成后重新打开工作台。",
+                StudioDialogTone.Info,
+                "查看登录说明",
+                "稍后处理",
+                false);
+            if (openGuide) OpenExternal(CodexCliUrl, "已在浏览器打开 Codex CLI 登录说明");
+        }
+
+        private void OpenExternal(string url, string successMessage)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
+                SetStatus(successMessage);
+            }
+            catch (Exception error)
+            {
+                StudioDialog.Show(Window, "无法打开浏览器", "请复制下面的地址到浏览器打开：\n\n" + url + "\n\n" + error.Message, StudioDialogTone.Error, "关闭", null, false);
+            }
         }
 
         private static string UsefulError(CliResult result)
