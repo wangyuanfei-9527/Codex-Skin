@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { validateBundle } from '../bundle-validator.mjs';
 import { exists, writeJsonAtomic } from '../io.mjs';
-import { BACKGROUND_PLACEHOLDER, ICONS_PLACEHOLDER, PET_PLACEHOLDER, codexNativeTokenCss, codexRuntimePatchCss } from '../theme-compiler.mjs';
+import { BACKGROUND_PLACEHOLDER, ICONS_PLACEHOLDER, PET_PLACEHOLDER, codexNativeTokenCss, codexReviewDiffCss, codexRuntimePatchCss } from '../theme-compiler.mjs';
 import { buildDocumentReadyExpression, buildInjectionExpression, listPageTargets, prepareTarget } from './cdp.mjs';
 
 function option(name) {
@@ -44,6 +44,7 @@ async function main() {
     cardTitles: bundle.design.copy.cardTitles,
     cardSubtitles: bundle.design.copy.cardSubtitles,
     layout: bundle.design.effects.layout,
+    reviewDiffCss: codexReviewDiffCss(bundle.design.palette),
     petName: bundle.manifest.pet?.name || null,
   });
   const documentReadyExpression = buildDocumentReadyExpression(expression);

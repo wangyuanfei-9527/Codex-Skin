@@ -16,7 +16,7 @@ test('encodes untrusted labels instead of interpolating them as JavaScript', () 
 });
 
 test('marks the real suggestion cards and keeps their labels whitespace tolerant', () => {
-  const expression = buildInjectionExpression({ bundleId: 'test', css: 'body{}' });
+  const expression = buildInjectionExpression({ bundleId: 'test', css: 'body{}', reviewDiffCss: ':host{}' });
   assert.match(expression, /group\/home-suggestions/);
   assert.match(expression, /data-skin-suggestion-index/);
   assert.match(expression, /skin-card-copy/);
@@ -30,6 +30,8 @@ test('marks the real suggestion cards and keeps their labels whitespace tolerant
   assert.match(expression, /Back to app/);
   assert.match(expression, /skin-window-topbar/);
   assert.match(expression, /skin-rail-action/);
+  assert.match(expression, /codex-skin-review-diff-shadow/);
+  assert.match(expression, /payload\.reviewDiffCss/);
   assert.match(expression, /refreshPageContext/);
   assert.match(expression, /replace\(\/\\s\+\/g/);
   assert.match(expression, /MutationObserver/);

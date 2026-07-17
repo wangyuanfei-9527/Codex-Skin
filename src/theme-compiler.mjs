@@ -68,6 +68,35 @@ export function codexNativeTokenCss(palette) {
 }`;
 }
 
+export function codexReviewDiffCss(palette) {
+  const p = palette;
+  const scheme = colorScheme(p.surface);
+  const syntaxFilter = scheme === 'dark' ? 'brightness(1.65) saturate(.78)' : 'none';
+  return `:host {
+  color-scheme: ${scheme} !important;
+  color: ${p.text} !important;
+  background-color: ${p.surface} !important;
+  --diffs-fg: ${p.text} !important;
+  --diffs-bg: ${p.surface} !important;
+  --diffs-light-bg: ${p.surface} !important;
+  --diffs-dark-bg: ${p.surface} !important;
+  --diffs-bg-context: ${p.surface} !important;
+  --diffs-bg-context-gutter: ${p.background} !important;
+  --diffs-bg-addition: color-mix(in srgb, ${p.surface} 82%, ${p.accent}) !important;
+  --diffs-bg-deletion: color-mix(in srgb, ${p.surface} 82%, ${p.accentAlt}) !important;
+  --diffs-bg-addition-emphasis: color-mix(in srgb, ${p.surface} 68%, ${p.accent}) !important;
+  --diffs-bg-deletion-emphasis: color-mix(in srgb, ${p.surface} 68%, ${p.accentAlt}) !important;
+  --codex-diffs-addition-number: color-mix(in srgb, ${p.surface} 70%, ${p.accent}) !important;
+  --codex-diffs-deletion-number: color-mix(in srgb, ${p.surface} 70%, ${p.accentAlt}) !important;
+  --diffs-bg-separator: ${p.surfaceAlt} !important;
+  --diffs-bg-buffer: ${p.background} !important;
+  --diffs-fg-number: ${p.mutedText} !important;
+}
+[data-line] > span[style*="color:"] {
+  filter: ${syntaxFilter};
+}`;
+}
+
 export function codexRuntimePatchCss(design) {
   const p = design.palette;
   const e = design.effects;
@@ -139,14 +168,14 @@ export function codexRuntimePatchCss(design) {
   color: ${hexRgba(p.text, 0.86)} !important;
   opacity: 1 !important;
 }
-:root.codex-skin-studio-active main.main-surface > header.app-header-tint button[class~="bg-token-bg-fog"],
+:root.codex-skin-studio-active button[class~="bg-token-bg-fog"],
 :root.codex-skin-studio-active .skin-thread-location-group button {
   color: ${hexRgba(p.text, 0.94)} !important;
   background-color: ${hexRgba(p.surfaceAlt, 0.86)} !important;
   background-image: none !important;
   border-color: ${hexRgba(p.border, 0.68)} !important;
 }
-:root.codex-skin-studio-active main.main-surface > header.app-header-tint button[class~="bg-token-bg-fog"] *,
+:root.codex-skin-studio-active button[class~="bg-token-bg-fog"] *,
 :root.codex-skin-studio-active .skin-thread-location-group button * {
   color: inherit !important;
   opacity: 1 !important;

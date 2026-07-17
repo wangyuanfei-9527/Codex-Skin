@@ -98,6 +98,7 @@ export function buildInjectionExpression(payload) {
         node.removeAttribute('data-skin-generated-aria-label');
       });
       document.querySelectorAll('[data-skin-suggestion-index]').forEach(node => node.removeAttribute('data-skin-suggestion-index'));
+      document.querySelectorAll('diffs-container').forEach(node => node.shadowRoot?.getElementById('codex-skin-review-diff-shadow')?.remove());
       document.getElementById('codex-skin-studio-style')?.remove();
       document.getElementById('codex-skin-studio-chrome')?.remove();
       document.getElementById('codex-skin-studio-background')?.remove();
@@ -203,6 +204,21 @@ export function buildInjectionExpression(payload) {
         ? shellMain.querySelector('.scrollbar-stable.flex-1.overflow-y-auto.p-panel')
         : null;
       shellMain.classList.toggle('skin-settings-shell', Boolean(settingsContent));
+      for (const diffContainer of document.querySelectorAll('diffs-container')) {
+        const shadowRoot = diffContainer.shadowRoot;
+        if (!shadowRoot) continue;
+        let reviewStyle = shadowRoot.getElementById('codex-skin-review-diff-shadow');
+        if (!payload.reviewDiffCss) {
+          reviewStyle?.remove();
+          continue;
+        }
+        if (!reviewStyle) {
+          reviewStyle = document.createElement('style');
+          reviewStyle.id = 'codex-skin-review-diff-shadow';
+          shadowRoot.appendChild(reviewStyle);
+        }
+        reviewStyle.textContent = payload.reviewDiffCss;
+      }
       document.querySelector('[class~="group/application-menu-top-bar"]')?.classList.add('skin-window-topbar');
       for (const button of document.querySelectorAll('button[aria-label]')) {
         const label = button.getAttribute('aria-label') || '';

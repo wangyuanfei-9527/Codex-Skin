@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { validateBundle } from '../src/bundle-validator.mjs';
-import { codexRuntimePatchCss, compileBundle } from '../src/theme-compiler.mjs';
+import { codexReviewDiffCss, codexRuntimePatchCss, compileBundle } from '../src/theme-compiler.mjs';
 import { replaceBundlePetSpritesheet } from '../src/pet-replacer.mjs';
 import { applyBundle, restoreOriginal, restoreSkin } from '../src/store.mjs';
 import { sampleSpec, writePng } from './helpers.mjs';
@@ -28,7 +28,7 @@ test('runtime patch upgrades historical themes without regeneration', () => {
   const css = codexRuntimePatchCss(sampleSpec());
   assert.match(css, /skin-thread-header-layout/);
   assert.match(css, /skin-thread-actions/);
-  assert.match(css, /button\[class~="bg-token-bg-fog"\]/);
+  assert.match(css, /:root\.codex-skin-studio-active button\[class~="bg-token-bg-fog"\]/);
   assert.match(css, /skin-thread-location-group/);
   assert.match(css, /main\.skin-settings-shell \[class~="rounded-2xl"\]\[class~="border-token-border"\]/);
   assert.match(css, /button\[role="switch"\]/);
@@ -36,6 +36,11 @@ test('runtime patch upgrades historical themes without regeneration', () => {
   assert.match(css, /skin-rail-section-header/);
   assert.match(css, /position: fixed !important/);
   assert.match(css, /CODEX_SKIN_BACKGROUND_DATA_URL/);
+  const reviewCss = codexReviewDiffCss(sampleSpec().palette);
+  assert.match(reviewCss, /color-scheme: dark/);
+  assert.match(reviewCss, /--diffs-bg-addition:/);
+  assert.match(reviewCss, /--diffs-bg-deletion:/);
+  assert.match(codexReviewDiffCss({ ...sampleSpec().palette, surface: '#FFFFFF' }), /color-scheme: light/);
 });
 
 test('compiles and validates a complete bundle, then detects tampering', async () => {
